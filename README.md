@@ -4,6 +4,50 @@
 
 An imaginary pizza tax service demonstrating how to build a frontend microservice using [play-fsm](https://github.com/hmrc/play-fsm).
 
+## Workshop steps
+
+- [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/commit/514e9aff6b1fe7c0cc30eb40731309f4f6adfdc4)
+- create initial journey model
+
+## Project content
+
+    .
+    ├── app
+    │   └── uk
+    │       └── gov
+    │           └── hmrc
+    │               └── pizzatax
+    │                   ├── journeys
+    │                   │   └── PizzaTaxJourneyModel.scala
+    │                   └── models
+    │                       └── QuestionnaireAnswers.scala
+    ├── project
+    │   ├── project
+    │   │   ├── project
+    │   │   │   ├── project
+    │   │   │   └── metals.sbt
+    │   │   └── metals.sbt
+    │   ├── build.properties
+    │   ├── metals.sbt
+    │   └── plugins.sbt
+    ├── test
+    │   └── uk
+    │       └── gov
+    │           └── hmrc
+    │               └── pizzatax
+    │                   ├── journeys
+    │                   │   └── PizzaTaxJourneyModelSpec.scala
+    │                   └── support
+    │                       ├── DummyContext.scala
+    │                       ├── InMemoryStore.scala
+    │                       ├── JourneyModelMatchers.scala
+    │                       ├── JourneyModelSpec.scala
+    │                       └── TestJourneyService.scala
+    ├── LICENSE
+    ├── README.md
+    ├── build.sbt
+    └── repository.yaml
+
 
 ## Running the tests
 
