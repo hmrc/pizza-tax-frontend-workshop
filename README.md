@@ -20,16 +20,16 @@ By convention, we define states inside an intermediary object `State` and transi
 
 Our initial model will have only three states: `Start`, `HaveYouBeenHungryRecently`, `WorkInProgressDeadEnd` and three possible transitions between them: `start`, `askHaveYouBeenHungryRecently`,`submittedHaveYouBeenHungryRecently`.
 
-### Things to learn in this step
+### Few things to learn:
 
-1 state can be defined either as a case object or a case class,
-2 every state must be a subtype of the `State` type,
-3 it is possible to group states by introducing an intermediary trait, e.g. `HasAnswers`,
-4 states can refer to any external clases, e.g. `QuestionnaireAnswers`,
-5 transitions are ordinary partial functions constructed using `Transition {...}` factory,
-6 if a case is not supported then the transition will not happen
-7 unit testing requires a drop-in of a few support classes
-8 unit testing FSM is as easy as writing: ```given(currentState) when transition thenGo(resultingState)```
+1. state can be defined either as a case object or a case class,
+2. every state must be a subtype of the `State` type,
+3. it is possible to group states by introducing an intermediary trait, e.g. `HasAnswers`,
+4. states can refer to any external clases, e.g. `QuestionnaireAnswers`,
+5. transitions are ordinary partial functions constructed using `Transition {...}` factory,
+6. if a case is not supported then the transition will not happen
+7. unit testing requires a drop-in of a few support classes
+8. unit testing FSM is as easy as writing: ```given(currentState) when transition thenGo(resultingState)```
 
 ## Project content
 
