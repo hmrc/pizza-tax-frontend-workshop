@@ -4,6 +4,21 @@
 
 An imaginary pizza tax service demonstrating how to build a frontend microservice using [play-fsm](https://github.com/hmrc/play-fsm).
 
+## Workshop steps
+
+- [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/commit/514e9aff6b1fe7c0cc30eb40731309f4f6adfdc4)
+- [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
+
+## Project content
+
+    .
+    ├── project
+    │   ├── build.properties
+    │   └── plugins.sbt
+    ├── LICENSE
+    ├── README.md
+    ├── build.sbt
+    └── repository.yaml
 
 ## Running the tests
 
