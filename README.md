@@ -6,8 +6,15 @@ An imaginary pizza tax service demonstrating how to build a frontend microservic
 
 ## Workshop steps
 
-- [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)
-- [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
+- 00 [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)
+- 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
+
+## Step 01 - Create an initial journey model
+
+In this step we define our initial journey model in `PizzaTaxJourneyModel` object, 
+and test it with `PizzaTaxJourneyModelSpec`.
+
+Initial model have only three states: `Start`, `HaveYouBeenHungryRecently`, `WorkInProgressDeadEnd` and three possible transitions: `start`, `askHaveYouBeenHungryRecently`,`submittedHaveYouBeenHungryRecently`.
 
 ## Project content
 
