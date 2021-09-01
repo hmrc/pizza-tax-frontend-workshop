@@ -7,6 +7,10 @@ An imaginary pizza tax service demonstrating how to build a frontend microservic
 - 00 [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
 
+## Goal
+
+Model the YES/NO question step.
+
 ## Step 01 - Create an initial journey model
 
 In this step we define our initial journey model in `PizzaTaxJourneyModel` object, 
