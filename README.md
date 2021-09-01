@@ -47,7 +47,6 @@ Newly added files are marked with (+), modified with (*), removed with (x).
     │                       └── (+) QuestionnaireAnswers.scala
     ├── project
     │   ├── build.properties
-    │   ├── metals.sbt
     │   └── plugins.sbt
     ├── test
     │   └── uk
