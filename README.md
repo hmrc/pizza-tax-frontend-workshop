@@ -6,7 +6,7 @@ An imaginary pizza tax service demonstrating how to build a frontend microservic
 
 ## Workshop steps
 
-- [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/commit/514e9aff6b1fe7c0cc30eb40731309f4f6adfdc4)
+- [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)
 - [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
 
 ## Project content
