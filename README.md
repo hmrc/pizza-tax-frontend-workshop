@@ -56,7 +56,6 @@ Newly added files are marked with (+), modified with (*), removed with (x).
     │                   └── support
     │                       ├── (+) DummyContext.scala
     │                       ├── (+) InMemoryStore.scala
-    │                       ├── (+) JourneyModelMatchers.scala
     │                       ├── (+) JourneyModelSpec.scala
     │                       └── (+) TestJourneyService.scala
     ├── LICENSE

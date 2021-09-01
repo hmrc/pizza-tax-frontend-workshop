@@ -39,20 +39,33 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
       "goto Start when askHaveYouBeenHungryRecently" in {
         given(State.Start) when Transitions.askHaveYouBeenHungryRecently should thenGo(State.Start)
       }
+      "do nothing when submittedHaveYouBeenHungryRecently=true" in {
+        given(State.Start) when Transitions
+          .submittedHaveYouBeenHungryRecently(true) should doNothing
+      }
     }
 
     "at state HaveYouBeenHungryRecently" should {
-      "stay when askHaveYouBeenHungryRecently" in {
-        val thatState = State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
-        given(thatState) when Transitions.askHaveYouBeenHungryRecently should thenGo(thatState)
+      "goto an empty HaveYouBeenHungryRecently when start" in {
+        given(
+          State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
+        ) when Transitions.start should thenGo(
+          State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)
+        )
       }
 
-      "goto WorkInProgressDeadEnd when submitted haveYouBeenHungryRecently=true" in {
+      "stay when askHaveYouBeenHungryRecently" in {
+        given(
+          State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
+        ) when Transitions.askHaveYouBeenHungryRecently should doNothing
+      }
+
+      "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=true" in {
         given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)) when Transitions
           .submittedHaveYouBeenHungryRecently(true) should thenGo(State.WorkInProgressDeadEnd)
       }
 
-      "goto WorkInProgressDeadEnd when submitted haveYouBeenHungryRecently=false" in {
+      "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=false" in {
         given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)) when Transitions
           .submittedHaveYouBeenHungryRecently(false) should thenGo(State.WorkInProgressDeadEnd)
       }

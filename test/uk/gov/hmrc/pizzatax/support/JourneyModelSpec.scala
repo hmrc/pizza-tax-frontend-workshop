@@ -25,8 +25,10 @@ import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.Try
 import uk.gov.hmrc.play.fsm.JourneyModel
+import org.scalatest.matchers.Matcher
+import org.scalatest.matchers.MatchResult
 
-trait JourneyModelSpec extends TestJourneyService[DummyContext] with JourneyModelMatchers {
+trait JourneyModelSpec extends TestJourneyService[DummyContext] {
   self: Matchers =>
 
   val model: JourneyModel
@@ -47,7 +49,7 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] with JourneyMode
       case None        => await(clear)
     }
 
-    def withBreadcrumbs(breadcrumbs: model.State*): this.type = {
+    final def withBreadcrumbs(breadcrumbs: model.State*): this.type = {
       await(for {
         Some((s, _)) <- fetch
         _            <- save((s, breadcrumbs.toList))
@@ -55,14 +57,66 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] with JourneyMode
       this
     }
 
-    def when(transition: model.Transition): (model.State, List[model.State]) =
-      await(apply(transition).recover { case model.TransitionNotAllowed(s, b, _) => (s, b) })
+    final def when(transition: model.Transition): When = {
+      val result = await(
+        apply(transition)
+          .recover { case model.TransitionNotAllowed(s, b, _) => (s, b) }
+      )
+      When(initialState, Right(result))
+    }
 
-    def shouldFailWhen(transition: model.Transition) =
+    final def shouldFailWhen(transition: model.Transition) =
       Try(await(apply(transition))).isSuccess shouldBe false
 
-    def when(merger: model.Merger[S], state: model.State): (model.State, List[model.State]) =
-      await(modify { s: S => merger.apply((s, state)) })
+    final def when(merger: model.Merger[S], state: model.State): When = {
+      val result = await(modify { s: S => merger.apply((s, state)) })
+      When(initialState, Right(result))
+    }
   }
+
+  case class When(
+    initialState: model.State,
+    result: Either[Throwable, (model.State, List[model.State])]
+  )
+
+  final def thenGo[S <: model.State: ClassTag](state: model.State): Matcher[When] =
+    new Matcher[When] {
+      override def apply(result: When): MatchResult =
+        result match {
+          case When(_, Left(exception)) =>
+            MatchResult(false, s"Transition has been expected but got an exception $exception", s"")
+          case When(_, Right((thisState, _))) if state != thisState =>
+            MatchResult(false, s"State $state has been expected but got state $thisState", s"")
+          case _ =>
+            MatchResult(true, "", s"")
+        }
+    }
+
+  final def thenMatch[S <: model.State: ClassTag](
+    statePF: PartialFunction[model.State, Unit]
+  ): Matcher[When] =
+    new Matcher[When] {
+      override def apply(result: When): MatchResult =
+        result match {
+          case When(_, Left(exception)) =>
+            MatchResult(false, s"Transition has been expected but got an exception $exception", s"")
+          case When(_, Right((thisState, _))) if !statePF.isDefinedAt(thisState) =>
+            MatchResult(false, s"Matching state has been expected but got state $thisState", s"")
+          case _ => MatchResult(true, "", s"")
+        }
+    }
+
+  final def doNothing[S <: model.State: ClassTag]: Matcher[When] =
+    new Matcher[When] {
+      override def apply(result: When): MatchResult =
+        result match {
+          case When(_, Left(exception)) =>
+            MatchResult(false, s"Transition has been expected but got an exception $exception", s"")
+          case When(initialState, Right((thisState, _))) if thisState != initialState =>
+            MatchResult(false, s"No state change has been expected but got state $thisState", s"")
+          case _ =>
+            MatchResult(true, "", s"")
+        }
+    }
 
 }
