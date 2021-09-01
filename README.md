@@ -31,7 +31,9 @@ Our initial model will have only three states: `Start`, `HaveYouBeenHungryRecent
 7. unit testing requires a drop-in of a few support classes
 8. unit testing FSM is as easy as writing: ```given(currentState) when transition thenGo(resultingState)```
 
-## Project content
+## Project content after changes
+
+Newly added files are marked with (+), modified with (*), removed with (x).
 
     .
     ├── app
@@ -40,9 +42,9 @@ Our initial model will have only three states: `Start`, `HaveYouBeenHungryRecent
     │           └── hmrc
     │               └── pizzatax
     │                   ├── journeys
-    │                   │   └── PizzaTaxJourneyModel.scala
+    │                   │   └── (+) PizzaTaxJourneyModel.scala
     │                   └── models
-    │                       └── QuestionnaireAnswers.scala
+    │                       └── (+) QuestionnaireAnswers.scala
     ├── project
     │   ├── build.properties
     │   ├── metals.sbt
@@ -53,13 +55,13 @@ Our initial model will have only three states: `Start`, `HaveYouBeenHungryRecent
     │           └── hmrc
     │               └── pizzatax
     │                   ├── journeys
-    │                   │   └── PizzaTaxJourneyModelSpec.scala
+    │                   │   └── (+) PizzaTaxJourneyModelSpec.scala
     │                   └── support
-    │                       ├── DummyContext.scala
-    │                       ├── InMemoryStore.scala
-    │                       ├── JourneyModelMatchers.scala
-    │                       ├── JourneyModelSpec.scala
-    │                       └── TestJourneyService.scala
+    │                       ├── (+) DummyContext.scala
+    │                       ├── (+) InMemoryStore.scala
+    │                       ├── (+) JourneyModelMatchers.scala
+    │                       ├── (+) JourneyModelSpec.scala
+    │                       └── (+) TestJourneyService.scala
     ├── LICENSE
     ├── README.md
     ├── build.sbt
