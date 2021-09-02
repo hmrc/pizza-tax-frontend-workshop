@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pizzatax.journeys
 
-import uk.gov.hmrc.pizzatax.models._
 import uk.gov.hmrc.play.fsm.JourneyModel
 
 object PizzaTaxJourneyModel extends JourneyModel {
