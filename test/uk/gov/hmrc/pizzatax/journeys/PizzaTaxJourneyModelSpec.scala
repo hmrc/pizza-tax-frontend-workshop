@@ -17,7 +17,6 @@
 package uk.gov.hmrc.pizzatax.journey
 
 import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModel
-import uk.gov.hmrc.pizzatax.models.QuestionnaireAnswers
 import uk.gov.hmrc.pizzatax.support._
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,47 +27,36 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
 
   import model.{State, Transitions}
 
-  val questionnaireStep01 =
-    QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true))
-
   "PizzaTaxJourneyModel" when {
 
     "at state Start" should {
       "goto HaveYouBeenHungryRecently when start" in
         given(State.Start)
           .when(Transitions.start)
-          .thenGoes(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
+          .thenGoes(State.HaveYouBeenHungryRecently)
 
-      "goto Start when askHaveYouBeenHungryRecently" in
-        given(State.Start)
-          .when(Transitions.askHaveYouBeenHungryRecently)
-          .thenGoes(State.Start)
-
-      "do nothing when submittedHaveYouBeenHungryRecently=true" in
-        given(State.Start)
-          .when(Transitions.submittedHaveYouBeenHungryRecently(true))
-          .thenNoChange
+      "do nothing when strange transition" in {
+        for (b <- Set(true, false))
+          given(State.Start)
+            .when(Transitions.submittedHaveYouBeenHungryRecently(b))
+            .thenNoChange
+      }
 
     }
 
     "at state HaveYouBeenHungryRecently" should {
       "goto an empty HaveYouBeenHungryRecently when start" in
-        given(State.HaveYouBeenHungryRecently(questionnaireStep01))
+        given(State.HaveYouBeenHungryRecently)
           .when(Transitions.start)
-          .thenGoes(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
+          .thenGoes(State.HaveYouBeenHungryRecently)
 
-      "stay when askHaveYouBeenHungryRecently" in
-        given(State.HaveYouBeenHungryRecently(questionnaireStep01))
-          .when(Transitions.askHaveYouBeenHungryRecently)
-          .thenNoChange
-
-      "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=true" in
-        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
+      "goto WorkInProgressDeadEnd when submitted true" in
+        given(State.HaveYouBeenHungryRecently)
           .when(Transitions.submittedHaveYouBeenHungryRecently(true))
           .thenGoes(State.WorkInProgressDeadEnd)
 
-      "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=false" in
-        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
+      "goto WorkInProgressDeadEnd when submitted false" in
+        given(State.HaveYouBeenHungryRecently)
           .when(Transitions.submittedHaveYouBeenHungryRecently(false))
           .thenGoes(State.WorkInProgressDeadEnd)
 
