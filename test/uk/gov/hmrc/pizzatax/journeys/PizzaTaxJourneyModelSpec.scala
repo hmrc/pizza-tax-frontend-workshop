@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pizzatax.journey
 
 import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModel
-import uk.gov.hmrc.pizzatax.models.QuestionnaireAnswers
+import uk.gov.hmrc.pizzatax.models._
 import uk.gov.hmrc.pizzatax.support._
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,44 +31,68 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
   "PizzaTaxJourneyModel" when {
 
     "at state Start" should {
-      "goto HaveYouBeenHungryRecently when start" in {
-        given(State.Start) when Transitions.start should thenGo(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)
+      "go to an empty HaveYouBeenHungryRecently when start" in
+        given(State.Start)
+          .when(Transitions.start)
+          .thenGoes(State.HaveYouBeenHungryRecently)
+
+      "do nothing when strange transition" in {
+        for (
+          t <- Set(
+                 Transitions.submittedHaveYouBeenHungryRecently(true),
+                 Transitions.submittedHaveYouBeenHungryRecently(false)
+               )
         )
-      }
-      "goto Start when askHaveYouBeenHungryRecently" in {
-        given(State.Start) when Transitions.askHaveYouBeenHungryRecently should thenGo(State.Start)
-      }
-      "do nothing when submittedHaveYouBeenHungryRecently=true" in {
-        given(State.Start) when Transitions
-          .submittedHaveYouBeenHungryRecently(true) should doNothing
+          given(State.Start)
+            .when(t)
+            .thenNoChange
       }
     }
 
     "at state HaveYouBeenHungryRecently" should {
-      "goto an empty HaveYouBeenHungryRecently when start" in {
-        given(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
-        ) when Transitions.start should thenGo(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)
-        )
-      }
+      "go to WhatYouDidToAddressHunger when submitted true" in
+        given(State.HaveYouBeenHungryRecently)
+          .when(Transitions.submittedHaveYouBeenHungryRecently(true))
+          .thenGoes(State.WhatYouDidToAddressHunger)
 
-      "stay when askHaveYouBeenHungryRecently" in {
-        given(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
-        ) when Transitions.askHaveYouBeenHungryRecently should doNothing
-      }
+      "go to DidYouOrderPizzaAnyway when submitted false" in
+        given(State.HaveYouBeenHungryRecently)
+          .when(Transitions.submittedHaveYouBeenHungryRecently(false))
+          .thenGoes(State.DidYouOrderPizzaAnyway)
 
-      "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=true" in {
-        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)) when Transitions
-          .submittedHaveYouBeenHungryRecently(true) should thenGo(State.WorkInProgressDeadEnd)
+      "reset questionaire when start" in {
+        for (b <- Set(true, false))
+          given(State.HaveYouBeenHungryRecently)
+            .when(Transitions.start)
+            .thenGoes(State.HaveYouBeenHungryRecently)
       }
+    }
 
-      "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=false" in {
-        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)) when Transitions
-          .submittedHaveYouBeenHungryRecently(false) should thenGo(State.WorkInProgressDeadEnd)
+    "at state WhatYouDidToAddressHunger" should {
+      "go to dead end when pizza has been ordered" in
+        given(State.WhatYouDidToAddressHunger)
+          .when(Transitions.submittedWhatYouDidToAddressHunger(HungerSolution.OrderPizza))
+          .thenGoes(State.WorkInProgressDeadEnd)
+
+      "go to DidYouOrderPizzaAnyway when any other option selected" in {
+        for (a <- HungerSolution.values - HungerSolution.OrderPizza)
+          given(State.WhatYouDidToAddressHunger)
+            .when(Transitions.submittedWhatYouDidToAddressHunger(a))
+            .thenGoes(State.DidYouOrderPizzaAnyway)
       }
+    }
+
+    "at state DidYouOrderPizzaAnyway" should {
+      "finish journey if not hungry and answer is no" in
+        given(State.DidYouOrderPizzaAnyway)
+          .when(Transitions.submittedDidYouOrderPizzaAnyway(false))
+          .thenGoes(State.NotEligibleForPizzaTax)
+
+      "ask ??? if not hungry and answer is yes" in
+        given(State.DidYouOrderPizzaAnyway)
+          .when(Transitions.submittedDidYouOrderPizzaAnyway(true))
+          .thenGoes(State.WorkInProgressDeadEnd)
+
     }
   }
 }

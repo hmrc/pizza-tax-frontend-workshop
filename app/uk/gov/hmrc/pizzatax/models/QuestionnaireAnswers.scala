@@ -17,9 +17,27 @@
 package uk.gov.hmrc.pizzatax.models
 
 final case class QuestionnaireAnswers(
-  haveYouBeenHungryRecently: Option[Boolean]
-)
+  haveYouBeenHungryRecently: Option[Boolean],
+  whatYouDidToAddressHunger: Option[HungerSolution],
+  didYouOrderPizzaAnyway: Option[Boolean]
+) {
+
+  def withHaveYouBeenHungryRecently(b: Boolean): QuestionnaireAnswers =
+    copy(haveYouBeenHungryRecently = Some(b))
+
+  def withWhatYouDidToAddressHunger(hs: HungerSolution): QuestionnaireAnswers =
+    copy(whatYouDidToAddressHunger = Some(hs))
+
+  def withDidYouOrderPizzaAnyway(b: Boolean): QuestionnaireAnswers =
+    copy(didYouOrderPizzaAnyway = Some(b))
+}
 
 object QuestionnaireAnswers {
-  val empty: QuestionnaireAnswers = QuestionnaireAnswers(haveYouBeenHungryRecently = None)
+
+  val empty =
+    QuestionnaireAnswers(
+      haveYouBeenHungryRecently = None,
+      whatYouDidToAddressHunger = None,
+      didYouOrderPizzaAnyway = None
+    )
 }

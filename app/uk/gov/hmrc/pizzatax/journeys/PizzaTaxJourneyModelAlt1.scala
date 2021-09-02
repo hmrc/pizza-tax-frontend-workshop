@@ -17,9 +17,10 @@
 package uk.gov.hmrc.pizzatax.journeys
 
 import uk.gov.hmrc.pizzatax.models._
+import uk.gov.hmrc.pizzatax.utils.OptionOps._
 import uk.gov.hmrc.play.fsm.JourneyModel
 
-object PizzaTaxJourneyModel extends JourneyModel {
+object PizzaTaxJourneyModelAlt1 extends JourneyModel {
 
   sealed trait State
 
@@ -34,16 +35,21 @@ object PizzaTaxJourneyModel extends JourneyModel {
     /** State intended to use only in the development of the model to fill loose ends. */
     case object WorkInProgressDeadEnd extends State
 
+    // Base trait of states carrying questionnaire answers
+    trait HaveAnswers extends State {
+      def answers: QuestionnaireAnswers
+    }
+
     // Base trait of states finishing the journey
     trait EndState extends State
 
-    case object HaveYouBeenHungryRecently extends State
+    case class HaveYouBeenHungryRecently(answers: QuestionnaireAnswers) extends HaveAnswers
 
-    case object WhatYouDidToAddressHunger extends State
+    case class WhatYouDidToAddressHunger(answers: QuestionnaireAnswers) extends HaveAnswers
 
-    case object DidYouOrderPizzaAnyway extends State
+    case class DidYouOrderPizzaAnyway(answers: QuestionnaireAnswers) extends HaveAnswers
 
-    case object NotEligibleForPizzaTax extends EndState
+    case class NotEligibleForPizzaTax(answers: QuestionnaireAnswers) extends HaveAnswers with EndState
 
   }
 
@@ -54,36 +60,50 @@ object PizzaTaxJourneyModel extends JourneyModel {
     // Transition (re)starting the journey.
     final val start =
       Transition {
-        case _ => goto(HaveYouBeenHungryRecently)
+        case _ => goto(HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
       }
 
     final def submittedHaveYouBeenHungryRecently(confirmed: Boolean) =
       Transition {
-        case HaveYouBeenHungryRecently =>
+        case HaveYouBeenHungryRecently(q) =>
           if (confirmed)
-            goto(WhatYouDidToAddressHunger)
+            goto(WhatYouDidToAddressHunger(q.withHaveYouBeenHungryRecently(true)))
           else
-            goto(DidYouOrderPizzaAnyway)
+            goto(DidYouOrderPizzaAnyway(q.withHaveYouBeenHungryRecently(false)))
+      }
+
+    final val backToHaveYouBeenHungryRecently =
+      Transition {
+        case WhatYouDidToAddressHunger(q) =>
+          goto(HaveYouBeenHungryRecently(q))
+        case DidYouOrderPizzaAnyway(q) if q.whatYouDidToAddressHunger.isEmpty =>
+          goto(HaveYouBeenHungryRecently(q))
       }
 
     final def submittedWhatYouDidToAddressHunger(solution: HungerSolution) =
       Transition {
-        case WhatYouDidToAddressHunger =>
+        case WhatYouDidToAddressHunger(q) =>
           solution match {
             case HungerSolution.OrderPizza =>
               goto(WorkInProgressDeadEnd)
             case _ =>
-              goto(DidYouOrderPizzaAnyway)
+              goto(DidYouOrderPizzaAnyway(q.withWhatYouDidToAddressHunger(solution)))
           }
+      }
+
+    final val backToWhatYouDidToAddressHunger =
+      Transition {
+        case DidYouOrderPizzaAnyway(q) if q.whatYouDidToAddressHunger.isDefined =>
+          goto(WhatYouDidToAddressHunger(q))
       }
 
     final def submittedDidYouOrderPizzaAnyway(confirmed: Boolean) =
       Transition {
-        case DidYouOrderPizzaAnyway =>
+        case DidYouOrderPizzaAnyway(q) =>
           if (confirmed)
             goto(WorkInProgressDeadEnd)
           else
-            goto(NotEligibleForPizzaTax)
+            goto(NotEligibleForPizzaTax(q.withDidYouOrderPizzaAnyway(false)))
       }
   }
 }
