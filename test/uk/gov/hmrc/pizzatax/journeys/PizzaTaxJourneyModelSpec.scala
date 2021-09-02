@@ -32,42 +32,45 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
 
     "at state Start" should {
       "goto HaveYouBeenHungryRecently when start" in {
-        given(State.Start) when Transitions.start should thenGo(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)
-        )
+        given(State.Start)
+          .when(Transitions.start)
+          .thenGoes(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
       }
       "goto Start when askHaveYouBeenHungryRecently" in {
-        given(State.Start) when Transitions.askHaveYouBeenHungryRecently should thenGo(State.Start)
+        given(State.Start)
+          .when(Transitions.askHaveYouBeenHungryRecently)
+          .thenGoes(State.Start)
       }
       "do nothing when submittedHaveYouBeenHungryRecently=true" in {
-        given(State.Start) when Transitions
-          .submittedHaveYouBeenHungryRecently(true) should doNothing
+        given(State.Start)
+          .when(Transitions.submittedHaveYouBeenHungryRecently(true))
+          .thenNoChange
       }
     }
 
     "at state HaveYouBeenHungryRecently" should {
       "goto an empty HaveYouBeenHungryRecently when start" in {
-        given(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
-        ) when Transitions.start should thenGo(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)
-        )
+        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true))))
+          .when(Transitions.start)
+          .thenGoes(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
       }
 
       "stay when askHaveYouBeenHungryRecently" in {
-        given(
-          State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true)))
-        ) when Transitions.askHaveYouBeenHungryRecently should doNothing
+        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers(haveYouBeenHungryRecently = Some(true))))
+          .when(Transitions.askHaveYouBeenHungryRecently)
+          .thenNoChange
       }
 
       "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=true" in {
-        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)) when Transitions
-          .submittedHaveYouBeenHungryRecently(true) should thenGo(State.WorkInProgressDeadEnd)
+        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
+          .when(Transitions.submittedHaveYouBeenHungryRecently(true))
+          .thenGoes(State.WorkInProgressDeadEnd)
       }
 
       "goto WorkInProgressDeadEnd when submittedHaveYouBeenHungryRecently=false" in {
-        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty)) when Transitions
-          .submittedHaveYouBeenHungryRecently(false) should thenGo(State.WorkInProgressDeadEnd)
+        given(State.HaveYouBeenHungryRecently(QuestionnaireAnswers.empty))
+          .when(Transitions.submittedHaveYouBeenHungryRecently(false))
+          .thenGoes(State.WorkInProgressDeadEnd)
       }
     }
   }
