@@ -29,9 +29,10 @@ Our initial model will have only three states: `Start`, `HaveYouBeenHungryRecent
 3. it is possible to group states by introducing an intermediary trait, e.g. `HasAnswers`,
 4. states can refer to any external clases, e.g. `QuestionnaireAnswers`,
 5. transitions are ordinary partial functions constructed using `Transition {...}` factory,
-6. if a case is not supported then the transition will not happen
-7. unit testing requires a drop-in of a few support classes
-8. unit testing FSM is as easy as writing: ```given(currentState) when transition thenGo(resultingState)```
+6. if a transition case is not supported then the transition will not happen
+7. one can use `WorkInProgressDeadEnd` to plumb loose ends in the journey
+8. unit testing requires a drop-in of a few support classes
+9. unit testing the journey is as easy as writing: ```given(State_A).when(transition).thenGoes(State_B)```
 
 ## Project content after changes
 
