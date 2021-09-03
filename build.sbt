@@ -28,13 +28,13 @@ lazy val compileDeps = Seq(
 
 def testDeps(scope: String) =
   Seq(
-    "org.scalatest"       %% "scalatest"    % "3.2.9"  % scope,
+    "org.scalatest"       %% "scalatest"    % "3.2.8"  % scope,
     "com.vladsch.flexmark" % "flexmark-all" % "0.36.8" % scope
   )
 
 lazy val itDeps = Seq(
   "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0"  % IntegrationTest,
-  "com.github.tomakehurst"  % "wiremock-jre8"      % "2.30.1" % IntegrationTest
+  "com.github.tomakehurst"  % "wiremock-jre8"      % "2.27.2" % IntegrationTest
 )
 
 lazy val root = (project in file("."))
