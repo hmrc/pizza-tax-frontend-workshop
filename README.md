@@ -10,7 +10,19 @@ An imaginary pizza tax service demonstrating how to build a frontend microservic
 
 ## Goal
 
-Start simple journey and model the YES/NO question step.
+Create initial journey modelling the YES/NO question.
+
+```
+                     Start
+                       │
+                       ▼
+            HaveYouBeenHungryRecently
+                       │
+            ┌──────────┴──────────┐
+         no │                     │ yes
+            ▼                     ▼
+WorkInProgressDeadEnd     WorkInProgressDeadEnd
+```
 
 ## Step 01 - Create an initial journey model
 
