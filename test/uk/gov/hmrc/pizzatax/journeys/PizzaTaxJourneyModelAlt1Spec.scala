@@ -68,39 +68,21 @@ class PizzaTaxJourneyModelAlt1Spec extends AnyWordSpec with Matchers with Journe
             .when(Transitions.start)
             .thenGoes(State.HaveYouBeenHungryRecently(q13e))
       }
-
-      "stay when backToHaveYouBeenHungryRecently" in {
-        for (b <- Set(true, false))
-          given(State.HaveYouBeenHungryRecently(q13e.withHaveYouBeenHungryRecently(b)))
-            .when(Transitions.backToHaveYouBeenHungryRecently)
-            .thenNoChange
-      }
-    }
-
-    "transition backToHaveYouBeenHungryRecently" should {
-      "go to HaveYouBeenHungryRecently for all questionnaire states" in {
-        for (
-          s <- Set(
-                 State.HaveYouBeenHungryRecently(q13e.withHaveYouBeenHungryRecently(true)),
-                 State.HaveYouBeenHungryRecently(q13e.withHaveYouBeenHungryRecently(false)),
-                 State.WhatYouDidToAddressHunger(q13e)
-               )
-        )
-          given(s)
-            .when(Transitions.backToHaveYouBeenHungryRecently)
-            .thenGoes(State.HaveYouBeenHungryRecently(s.answers))
-      }
     }
 
     "at state WhatYouDidToAddressHunger" should {
-      "go to dead end when pizza has been ordered" in
+
+      val givenWhatYouDidToAddressHunger =
         given(State.WhatYouDidToAddressHunger(q13e.withHaveYouBeenHungryRecently(true)))
+
+      "go to dead end when pizza has been ordered" in
+        givenWhatYouDidToAddressHunger
           .when(Transitions.submittedWhatYouDidToAddressHunger(HungerSolution.OrderPizza))
           .thenGoes(State.WorkInProgressDeadEnd)
 
       "go to DidYouOrderPizzaAnyway when any other option selected" in {
         for (a <- HungerSolution.values - HungerSolution.OrderPizza)
-          given(State.WhatYouDidToAddressHunger(q13e.withHaveYouBeenHungryRecently(true)))
+          givenWhatYouDidToAddressHunger
             .when(Transitions.submittedWhatYouDidToAddressHunger(a))
             .thenGoes(
               State.DidYouOrderPizzaAnyway(
@@ -147,6 +129,17 @@ class PizzaTaxJourneyModelAlt1Spec extends AnyWordSpec with Matchers with Journe
             )
           )
 
+      "do nothing if initial state has an invalid questionnaire" in
+        given(
+          State.DidYouOrderPizzaAnyway(
+            q13e
+              .withHaveYouBeenHungryRecently(false)
+              .withWhatYouDidToAddressHunger(HungerSolution.Daydream)
+          )
+        )
+          .when(Transitions.submittedDidYouOrderPizzaAnyway(false))
+          .thenNoChange
+
       "ask ??? if hungry, didn't order pizza and answer is yes" in
         given(
           State.DidYouOrderPizzaAnyway(
@@ -158,6 +151,58 @@ class PizzaTaxJourneyModelAlt1Spec extends AnyWordSpec with Matchers with Journe
           .when(Transitions.submittedDidYouOrderPizzaAnyway(true))
           .thenGoes(State.WorkInProgressDeadEnd)
 
+    }
+
+    // An example of testing backward transitions (back links)
+    "transition backToHaveYouBeenHungryRecently" should {
+      "ask HaveYouBeenHungryRecently again for all valid states" in {
+        for {
+          q <- QuestionnaireAnswers.allPossibleQ13e
+          s <- Set(
+                 State.HaveYouBeenHungryRecently(q),
+                 State.WhatYouDidToAddressHunger(q),
+                 State.DidYouOrderPizzaAnyway(q.clearWhatYouDidToAddressHunger())
+               )
+        } given(s)
+          .when(Transitions.backToHaveYouBeenHungryRecently)
+          .thenGoes(State.HaveYouBeenHungryRecently(s.answers))
+      }
+
+      "do nothing for all invalid states" in {
+        for {
+          q <- QuestionnaireAnswers.allPossibleQ13e
+          s <- Set(
+                 State.NotEligibleForPizzaTax(q)
+               )
+        } given(s)
+          .when(Transitions.backToHaveYouBeenHungryRecently)
+          .thenNoChange
+      }
+    }
+
+    "transition backToWhatYouDidToAddressHunger" should {
+      "ask WhatYouDidToAddressHunger again for all valid states" in {
+        for {
+          q <- QuestionnaireAnswers.allPossibleQ13e.filter(_.whatYouDidToAddressHunger.isDefined)
+          s <- Set(
+                 State.DidYouOrderPizzaAnyway(q)
+               )
+        } given(s)
+          .when(Transitions.backToWhatYouDidToAddressHunger)
+          .thenGoes(State.WhatYouDidToAddressHunger(s.answers))
+      }
+
+      "do nothing for all invalid states" in {
+        for {
+          q <- QuestionnaireAnswers.allPossibleQ13e
+          s <- Set(
+                 State.HaveYouBeenHungryRecently(q),
+                 State.NotEligibleForPizzaTax(q)
+               )
+        } given(s)
+          .when(Transitions.backToWhatYouDidToAddressHunger)
+          .thenNoChange
+      }
     }
   }
 }

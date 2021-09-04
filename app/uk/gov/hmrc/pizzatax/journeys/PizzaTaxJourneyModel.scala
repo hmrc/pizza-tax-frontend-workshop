@@ -38,12 +38,20 @@ object PizzaTaxJourneyModel extends JourneyModel {
     trait EndState extends State
 
     case object HaveYouBeenHungryRecently extends State
-
     case object WhatYouDidToAddressHunger extends State
-
     case object DidYouOrderPizzaAnyway extends State
-
     case object NotEligibleForPizzaTax extends EndState
+    case object HowManyPizzasDidYouOrder extends State
+    case class AreYouEligibleForSpecialAllowance(pizzaOrders: PizzaOrdersDeclaration) extends State
+    case class WhatIsYourITRole(pizzaOrders: PizzaOrdersDeclaration) extends State
+
+    case class QuestionnaireSummary(
+      pizzaOrders: PizzaOrdersDeclaration,
+      pizzaAllowance: PizzaAllowance,
+      itRoleOpt: Option[ITRole] = None
+    ) extends State
+
+    case class TaxStatementConfirmation(statement: PizzaTaxStatement) extends EndState
 
   }
 
@@ -71,7 +79,7 @@ object PizzaTaxJourneyModel extends JourneyModel {
         case WhatYouDidToAddressHunger =>
           solution match {
             case HungerSolution.OrderPizza =>
-              goto(WorkInProgressDeadEnd)
+              goto(HowManyPizzasDidYouOrder)
             case _ =>
               goto(DidYouOrderPizzaAnyway)
           }
@@ -81,9 +89,37 @@ object PizzaTaxJourneyModel extends JourneyModel {
       Transition {
         case DidYouOrderPizzaAnyway =>
           if (confirmed)
-            goto(WorkInProgressDeadEnd)
+            goto(HowManyPizzasDidYouOrder)
           else
             goto(NotEligibleForPizzaTax)
+      }
+
+    final def submittedHowManyPizzasDidYouOrder(
+      limits: BasicPizzaAllowanceLimits
+    )(pizzaOrders: PizzaOrdersDeclaration) =
+      Transition {
+        case HowManyPizzasDidYouOrder =>
+          if (limits.areNotExceededBy(pizzaOrders))
+            goto(QuestionnaireSummary(pizzaOrders, PizzaAllowance.Basic))
+          else
+            goto(AreYouEligibleForSpecialAllowance(pizzaOrders))
+      }
+
+    final def submittedAreYouEligibleForSpecialAllowance(pizzaAllowance: PizzaAllowance) =
+      Transition {
+        case AreYouEligibleForSpecialAllowance(pizzaOrders) =>
+          pizzaAllowance match {
+            case PizzaAllowance.ITWorker =>
+              goto(WhatIsYourITRole(pizzaOrders))
+            case _ =>
+              goto(QuestionnaireSummary(pizzaOrders, pizzaAllowance))
+          }
+      }
+
+    final def submittedWhatIsYourITRole(itRole: ITRole) =
+      Transition {
+        case WhatIsYourITRole(pizzaOrders) =>
+          goto(QuestionnaireSummary(pizzaOrders, PizzaAllowance.ITWorker, Some(itRole)))
       }
   }
 }

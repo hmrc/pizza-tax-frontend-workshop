@@ -26,7 +26,7 @@ trait TestJourneyService[HC] extends PersistentJourneyService[HC] {
 
   override val journeyKey: String = "TestJourney"
 
-  val storage = new InMemoryStore[(model.State, List[model.State]), HC] {}
+  val storage = new InMemoryStore[(model.State, List[model.State])] {}
 
   override def fetch(implicit
     hc: HC,

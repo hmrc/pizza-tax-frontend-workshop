@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.support
+package uk.gov.hmrc.pizzatax.models
 
-sealed trait DummyContext
+trait BasicPizzaAllowanceLimits {
 
-object DummyContext {
-  implicit val default: DummyContext = new DummyContext {}
+  def areNotExceededBy(pizzaOrders: PizzaOrdersDeclaration): Boolean
 }

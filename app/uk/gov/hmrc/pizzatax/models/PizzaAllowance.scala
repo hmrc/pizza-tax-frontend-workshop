@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.support
+package uk.gov.hmrc.pizzatax.models
 
-sealed trait DummyContext
+sealed trait PizzaAllowance
 
-object DummyContext {
-  implicit val default: DummyContext = new DummyContext {}
+object PizzaAllowance {
+
+  case object Basic extends PizzaAllowance
+  case object ITWorker extends PizzaAllowance
+  case object HGVDriver extends PizzaAllowance
+  case object Firefighter extends PizzaAllowance
+  case object Snowflake extends PizzaAllowance
+  case object SingleFather extends PizzaAllowance
+  case object BrokenHeart extends PizzaAllowance
+
+  final val values: Set[PizzaAllowance] =
+    Set(Basic, ITWorker, HGVDriver, Firefighter, Snowflake, SingleFather, BrokenHeart)
 }

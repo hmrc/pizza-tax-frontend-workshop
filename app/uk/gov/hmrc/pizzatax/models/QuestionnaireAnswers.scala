@@ -15,18 +15,28 @@
  */
 
 package uk.gov.hmrc.pizzatax.models
+import uk.gov.hmrc.pizzatax.utils.OptionOps._
 
-final case class QuestionnaireAnswers(
+final case class QuestionnaireAnswers private (
   haveYouBeenHungryRecently: Option[Boolean],
   whatYouDidToAddressHunger: Option[HungerSolution],
   didYouOrderPizzaAnyway: Option[Boolean]
-) {
+) extends CanValidate {
+
+  override def isValid: Boolean =
+    whatYouDidToAddressHunger.isEmptyOr(haveYouBeenHungryRecently.isTrue) &&
+      didYouOrderPizzaAnyway.isEmptyOr(
+        haveYouBeenHungryRecently.isFalse || whatYouDidToAddressHunger.exists(_ != HungerSolution.OrderPizza)
+      )
 
   def withHaveYouBeenHungryRecently(b: Boolean): QuestionnaireAnswers =
     copy(haveYouBeenHungryRecently = Some(b))
 
   def withWhatYouDidToAddressHunger(hs: HungerSolution): QuestionnaireAnswers =
     copy(whatYouDidToAddressHunger = Some(hs))
+
+  def clearWhatYouDidToAddressHunger(): QuestionnaireAnswers =
+    copy(whatYouDidToAddressHunger = None)
 
   def withDidYouOrderPizzaAnyway(b: Boolean): QuestionnaireAnswers =
     copy(didYouOrderPizzaAnyway = Some(b))
@@ -40,4 +50,13 @@ object QuestionnaireAnswers {
       whatYouDidToAddressHunger = None,
       didYouOrderPizzaAnyway = None
     )
+
+  val allPossibleQ13e: Set[QuestionnaireAnswers] =
+    (for {
+      haveYouBeenHungryRecently <- options(true, false)
+      whatYouDidToAddressHunger <- options(HungerSolution.values)
+      didYouOrderPizzaAnyway    <- options(true, false)
+    } yield QuestionnaireAnswers(haveYouBeenHungryRecently, whatYouDidToAddressHunger, didYouOrderPizzaAnyway))
+      .filter(_.isValid)
+      .toSet
 }

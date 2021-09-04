@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.support
+package uk.gov.hmrc.pizzatax.models
 
-sealed trait DummyContext
-
-object DummyContext {
-  implicit val default: DummyContext = new DummyContext {}
+trait CanValidate {
+  def isValid: Boolean
 }

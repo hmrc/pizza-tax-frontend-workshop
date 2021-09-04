@@ -19,6 +19,7 @@ package uk.gov.hmrc.pizzatax.journeys
 import uk.gov.hmrc.pizzatax.models._
 import uk.gov.hmrc.pizzatax.utils.OptionOps._
 import uk.gov.hmrc.play.fsm.JourneyModel
+import scala.concurrent.Future
 
 object PizzaTaxJourneyModelAlt1 extends JourneyModel {
 
@@ -53,6 +54,10 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
 
   }
 
+  /** Validate entity, apply and go to the new state, otherwise stay. */
+  final def gotoIfValid[B <: CanValidate](f: B => State)(b: B): Future[State] =
+    if (b.isValid) goto(f(b)) else stay[State]
+
   /** This is where things happen a.k.a bussiness logic of the service. */
   object Transitions {
     import State._
@@ -67,9 +72,9 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
       Transition {
         case HaveYouBeenHungryRecently(q) =>
           if (confirmed)
-            goto(WhatYouDidToAddressHunger(q.withHaveYouBeenHungryRecently(true)))
+            gotoIfValid(WhatYouDidToAddressHunger)(q.withHaveYouBeenHungryRecently(true))
           else
-            goto(DidYouOrderPizzaAnyway(q.withHaveYouBeenHungryRecently(false)))
+            gotoIfValid(DidYouOrderPizzaAnyway)(q.withHaveYouBeenHungryRecently(false))
       }
 
     final val backToHaveYouBeenHungryRecently =
@@ -87,7 +92,7 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
             case HungerSolution.OrderPizza =>
               goto(WorkInProgressDeadEnd)
             case _ =>
-              goto(DidYouOrderPizzaAnyway(q.withWhatYouDidToAddressHunger(solution)))
+              gotoIfValid(DidYouOrderPizzaAnyway)(q.withWhatYouDidToAddressHunger(solution))
           }
       }
 
@@ -103,7 +108,7 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
           if (confirmed)
             goto(WorkInProgressDeadEnd)
           else
-            goto(NotEligibleForPizzaTax(q.withDidYouOrderPizzaAnyway(false)))
+            gotoIfValid(NotEligibleForPizzaTax)(q.withDidYouOrderPizzaAnyway(false))
       }
   }
 }

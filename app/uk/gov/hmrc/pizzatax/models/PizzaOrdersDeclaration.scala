@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.support
+package uk.gov.hmrc.pizzatax.models
 
-sealed trait DummyContext
+final case class PizzaOrdersDeclaration(
+  totalNumberOfPizzas: Int
+)
 
-object DummyContext {
-  implicit val default: DummyContext = new DummyContext {}
-}
+object PizzaOrdersDeclaration

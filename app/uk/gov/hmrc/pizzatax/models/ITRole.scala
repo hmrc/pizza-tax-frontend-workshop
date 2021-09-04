@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.support
+package uk.gov.hmrc.pizzatax.models
 
-sealed trait DummyContext
+sealed trait ITRole
 
-object DummyContext {
-  implicit val default: DummyContext = new DummyContext {}
+object ITRole {
+
+  case object Manager extends ITRole
+  case object Architect extends ITRole
+  case object Developer extends ITRole
+  case object Tester extends ITRole
+  case object Scrummaster extends ITRole
+  case object Analyst extends ITRole
+  case object Designer extends ITRole
+  case object Researcher extends ITRole
+  case object Apprentice extends ITRole
+
+  final val values: Set[ITRole] =
+    Set(Manager, Architect, Developer, Tester, Scrummaster, Analyst, Designer, Researcher, Apprentice)
 }

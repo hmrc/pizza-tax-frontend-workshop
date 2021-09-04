@@ -31,7 +31,7 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
   "PizzaTaxJourneyModel" when {
 
     "at state Start" should {
-      "go to an empty HaveYouBeenHungryRecently when start" in
+      "ask an empty HaveYouBeenHungryRecently when start" in
         given(State.Start)
           .when(Transitions.start)
           .thenGoes(State.HaveYouBeenHungryRecently)
@@ -50,12 +50,12 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
     }
 
     "at state HaveYouBeenHungryRecently" should {
-      "go to WhatYouDidToAddressHunger when submitted true" in
+      "ask WhatYouDidToAddressHunger when submitted true" in
         given(State.HaveYouBeenHungryRecently)
           .when(Transitions.submittedHaveYouBeenHungryRecently(true))
           .thenGoes(State.WhatYouDidToAddressHunger)
 
-      "go to DidYouOrderPizzaAnyway when submitted false" in
+      "ask DidYouOrderPizzaAnyway when submitted false" in
         given(State.HaveYouBeenHungryRecently)
           .when(Transitions.submittedHaveYouBeenHungryRecently(false))
           .thenGoes(State.DidYouOrderPizzaAnyway)
@@ -69,12 +69,12 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
     }
 
     "at state WhatYouDidToAddressHunger" should {
-      "go to dead end when pizza has been ordered" in
+      "ask HowManyPizzasDidYouOrder when pizza has been ordered" in
         given(State.WhatYouDidToAddressHunger)
           .when(Transitions.submittedWhatYouDidToAddressHunger(HungerSolution.OrderPizza))
-          .thenGoes(State.WorkInProgressDeadEnd)
+          .thenGoes(State.HowManyPizzasDidYouOrder)
 
-      "go to DidYouOrderPizzaAnyway when any other option selected" in {
+      "ask DidYouOrderPizzaAnyway when any other option selected" in {
         for (a <- HungerSolution.values - HungerSolution.OrderPizza)
           given(State.WhatYouDidToAddressHunger)
             .when(Transitions.submittedWhatYouDidToAddressHunger(a))
@@ -88,11 +88,83 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
           .when(Transitions.submittedDidYouOrderPizzaAnyway(false))
           .thenGoes(State.NotEligibleForPizzaTax)
 
-      "ask ??? if not hungry and answer is yes" in
+      "ask HowManyPizzasDidYouOrder if not hungry and answer is yes" in
         given(State.DidYouOrderPizzaAnyway)
           .when(Transitions.submittedDidYouOrderPizzaAnyway(true))
-          .thenGoes(State.WorkInProgressDeadEnd)
+          .thenGoes(State.HowManyPizzasDidYouOrder)
+    }
 
+    "at state HowManyPizzasDidYouOrder" should {
+
+      val basicPizzaAllowanceLimits = new BasicPizzaAllowanceLimits {
+        override def areNotExceededBy(pizzaOrders: PizzaOrdersDeclaration): Boolean =
+          pizzaOrders.totalNumberOfPizzas <= 4
+      }
+
+      "ask AreYouEligibleForSpecialAllowance when declaration submited and exceeds the basic allowance limits" in
+        given(State.HowManyPizzasDidYouOrder)
+          .when(
+            Transitions.submittedHowManyPizzasDidYouOrder(basicPizzaAllowanceLimits)(
+              PizzaOrdersDeclaration(totalNumberOfPizzas = 12)
+            )
+          )
+          .thenGoes(
+            State.AreYouEligibleForSpecialAllowance(pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = 12))
+          )
+
+      "show QuestionnaireSummary when declaration submited and exceeds the basic allowance limits" in
+        given(State.HowManyPizzasDidYouOrder)
+          .when(
+            Transitions.submittedHowManyPizzasDidYouOrder(basicPizzaAllowanceLimits)(
+              PizzaOrdersDeclaration(totalNumberOfPizzas = 4)
+            )
+          )
+          .thenGoes(
+            State.QuestionnaireSummary(
+              pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = 4),
+              pizzaAllowance = PizzaAllowance.Basic
+            )
+          )
+    }
+
+    "at state AreYouEligibleForSpecialAllowance" should {
+      "show QuestionnaireSummary when not an IT worker" in {
+        for (allowance <- PizzaAllowance.values - PizzaAllowance.ITWorker; pizzas <- 4 to 40 by 4)
+          given(
+            State.AreYouEligibleForSpecialAllowance(pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = pizzas))
+          )
+            .when(Transitions.submittedAreYouEligibleForSpecialAllowance(allowance))
+            .thenGoes(
+              State.QuestionnaireSummary(
+                pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = pizzas),
+                pizzaAllowance = allowance
+              )
+            )
+      }
+
+      "ask WhatIsYourITRole when an IT worker" in {
+        for (pizzas <- 4 to 40 by 4)
+          given(
+            State.AreYouEligibleForSpecialAllowance(pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = pizzas))
+          )
+            .when(Transitions.submittedAreYouEligibleForSpecialAllowance(PizzaAllowance.ITWorker))
+            .thenGoes(State.WhatIsYourITRole(pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = pizzas)))
+      }
+    }
+
+    "at state WhatIsYourITRole" should {
+      "show QuestionnaireSummary when submitted an answer" in {
+        for (itRole <- ITRole.values; pizzas <- 4 to 40 by 4)
+          given(State.WhatIsYourITRole(pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = pizzas)))
+            .when(Transitions.submittedWhatIsYourITRole(itRole))
+            .thenGoes(
+              State.QuestionnaireSummary(
+                pizzaOrders = PizzaOrdersDeclaration(totalNumberOfPizzas = pizzas),
+                pizzaAllowance = PizzaAllowance.ITWorker,
+                itRoleOpt = Some(itRole)
+              )
+            )
+      }
     }
   }
 }

@@ -22,4 +22,35 @@ object OptionOps {
     def isTrue: Boolean = o.exists(b => b == true)
     def isFalse: Boolean = o.exists(b => b == false)
   }
+
+  implicit class OptionExt[A](val o1: Option[A]) extends AnyVal {
+    def isJoint(o2: Option[Any]): Boolean = checkJoint(o1, o2)
+    def isDisjoint(o2: Option[Any]): Boolean = checkDisjoint(o1, o2)
+    def isEmptyOr(f: A => Boolean): Boolean = checkIfDefined(o1, f)
+    def isEmptyOr(f: => Boolean): Boolean = checkIfDefined(o1, (_: Any) => f)
+  }
+
+  def options[A](set: Set[A]): Iterable[Option[A]] =
+    set.map(Option.apply(_)) + None
+
+  def options[A](values: A*): Iterable[Option[A]] =
+    None :: values.toList.map(Some.apply)
+
+  def checkIfDefined[A](a: Option[A], f: A => Boolean): Boolean =
+    a match {
+      case None    => true
+      case Some(v) => f(v)
+    }
+
+  def checkJoint(a: Option[Any], b: Option[Any]): Boolean =
+    a match {
+      case None => b.isEmpty
+      case _    => b.isDefined
+    }
+
+  def checkDisjoint(a: Option[Any], b: Option[Any]): Boolean =
+    a match {
+      case None => b.isDefined
+      case _    => b.isEmpty
+    }
 }
