@@ -40,9 +40,9 @@ Elaborate the model and explore alternatives.
                   │                 │      │                     ▼
                   │                 │      │              WhatIsYourITRole
                   │                 │      │                     │
-                  │                 │      │ ┌───────────────────┘
-                  │                 │      │ │
-                  │                 ▼      ▼ ▼
+                  │                 │      │      ┌──────────────┘
+                  │                 │      │      │
+                  │                 ▼      ▼      ▼
                   │              QuestionnaireSummary
                   │                        │
                   │                        │
