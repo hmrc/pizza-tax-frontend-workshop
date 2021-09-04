@@ -16,4 +16,8 @@
 
 package uk.gov.hmrc.pizzatax.support
 
-case class DummyContext()
+sealed trait DummyContext
+
+object DummyContext {
+  implicit val default: DummyContext = new DummyContext {}
+}

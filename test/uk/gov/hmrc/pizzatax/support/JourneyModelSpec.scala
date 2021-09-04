@@ -26,6 +26,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+import org.scalactic.source
 
 /**
   * Abstract base of FSM journey specifications.
@@ -56,36 +57,29 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
   val model: JourneyModel
 
   /** Assumption about the initial state of journey. */
-  case class given[S <: model.State: ClassTag](initialState: S) {
+  case class given[S <: model.State: ClassTag](initialState: S, breadcrumbs: List[model.State] = Nil) {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     private def await[A](future: Future[A])(implicit timeout: Duration): A =
       Await.result(future, timeout)
 
-    implicit val context: DummyContext = DummyContext()
-
     implicit val defaultTimeout: FiniteDuration = 5 seconds
 
-    Option(initialState) match {
-      case Some(state) => await(save((state, Nil)))
-      case None        => await(clear)
-    }
-
-    final def withBreadcrumbs(breadcrumbs: model.State*): this.type = {
-      await(for {
-        Some((s, _)) <- fetch
-        _            <- save((s, breadcrumbs.toList))
-      } yield ())
-      this
-    }
+    final def withBreadcrumbs(breadcrumbs: model.State*): given[S] =
+      given(initialState, breadcrumbs.toList)
 
     final def when(transition: model.Transition): When = {
+      Option(initialState) match {
+        case Some(state) => await(save((state, breadcrumbs)))
+        case None        => await(clear)
+      }
       val resultOrException = await(
         apply(transition)
           .map(Right.apply)
           .recover {
             case model.TransitionNotAllowed(s, b, _) => Right((s, b))
+            case model.StayInCurrentState            => await(fetch).toRight(model.StayInCurrentState)
             case exception                           => Left(exception)
           }
       )
@@ -93,12 +87,17 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
     }
 
     final def when(merger: model.Merger[S], state: model.State): When = {
+      Option(initialState) match {
+        case Some(state) => await(save((state, breadcrumbs)))
+        case None        => await(clear)
+      }
       val resultOrException =
         await(
           modify { s: S => merger.apply((s, state)) }
             .map(Right.apply)
             .recover {
               case model.TransitionNotAllowed(s, b, _) => Right((s, b))
+              case model.StayInCurrentState            => await(fetch).toRight(model.StayInCurrentState)
               case exception                           => Left(exception)
             }
         )
@@ -113,19 +112,19 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
   ) {
 
     /** Asserts that the resulting state of the transition is equal to some expected state. */
-    final def thenGoes(state: model.State): Unit =
+    final def thenGoes(state: model.State)(implicit pos: source.Position): Unit =
       this should JourneyModelSpec.this.thenGo(state)
 
     /** Asserts that the resulting state of the transition matches some case. */
-    final def thenMatches(statePF: PartialFunction[model.State, Unit]): Unit =
+    final def thenMatches(statePF: PartialFunction[model.State, Unit])(implicit pos: source.Position): Unit =
       this should JourneyModelSpec.this.thenMatch(statePF)
 
     /** Asserts that the transition hasn't change the state. */
-    final def thenNoChange(): Unit =
+    final def thenNoChange(implicit pos: source.Position): Unit =
       this should JourneyModelSpec.this.changeNothing
 
     /** Asserts that the transition threw some expected exception of type E. */
-    final def thenFailsWith[E <: Throwable](implicit ct: ClassTag[E]): Unit =
+    final def thenFailsWith[E <: Throwable](implicit ct: ClassTag[E], pos: source.Position): Unit =
       this should JourneyModelSpec.this.failWith[E]
 
   }
@@ -139,7 +138,10 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
             MatchResult(false, s"Transition has been expected but got an exception $exception", s"")
 
           case When(_, Right((thisState, _))) if state != thisState =>
-            MatchResult(false, s"State $state has been expected but got state $thisState", s"")
+            if (state != result.initialState && thisState == result.initialState)
+              MatchResult(false, s"New state $state has been expected but the transition didn't happen.", s"")
+            else
+              MatchResult(false, s"State $state has been expected but got state $thisState", s"")
 
           case _ =>
             MatchResult(true, "", s"")
