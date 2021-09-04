@@ -8,19 +8,57 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
 - **02 [further extend journey model and explore alternatives](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)**
 
-## Goals
+## Goal
 
-- Model the "selection from the list" question step.
-- Explore alternative encodings of the journey model
+Elaborate the model and explore alternatives.
+
+                        ┌─────────┐
+                        │  Start  │
+                        └────┬────┘
+                             │
+                             ▼
+                 HaveYouBeenHungryRecently
+                             │
+                  ┌────no────┴────yes───┐
+                  │                     ▼
+                  │              WhatYouDidToAddressHunger
+                  │                     │
+                  │ ┌──other────────────┴───┐
+                  │ │                       │
+                  ▼ ▼                 HungerSolution
+        DidYouOrderPizzaAnyway        == OrderPizza
+                  │                         │
+                  ├───yes─────────────────┐ │
+                  │                       ▼ ▼
+                  │              HowManyPizzasDidYouOrder
+                  │                         │
+                  no                ┌───L───┴───H────┐
+                  │                 │                ▼
+                  │                 │    AreYouEligibleForSpecialAllowance
+                  │                 │                │
+                  │                 │      ┌──other──┴─ITWorker──┐
+                  │                 │      │                     ▼
+                  │                 │      │              WhatIsYourITRole
+                  │                 │      │                     │
+                  │                 │      │ ┌───────────────────┘
+                  │                 │      │ │
+                  │                 ▼      ▼ ▼
+                  │              QuestionnaireSummary
+                  │                        │
+                  │                        │
+    ┌─────────────▼────────┐    ┌──────────▼─────────────┐
+    │NotEligibleForPizzaTax│    │TaxStatementConfirmation│
+    └──────────────────────┘    └────────────────────────┘
 
 ## Step 02 - Extend journey model and explore alternatives
 
-In this step we extend the model by adding additional steps, mainly `WhatYouDidToAddressHunger`, `DidYouOrderPizzaAnyway` and `NotEligibleForPizzaTax`. 
-We also connect new states to the previous ones by new set of transitions: `submittedWhatYouDidToAddressHunger` and `submittedDidYouOrderPizzaAnyway`.
+In this step we extend the model by adding new states and transitions. 
 
-In the `PizzaTaxJourneyModelAlt1` we explore an alternative design of the journey model where all answers are explicitly remembered in the `QuestionnaireAnswers` object. To make common `answer` field available easily we let states extend the helper trait `HasAnswers`.
+In the `PizzaTaxJourneyModelAlt1` we explore an alternative design of the journey model where all answers are explicitly remembered in the `QuestionnaireAnswers` object in optional fields. We let questionaire states extend the helper trait `HasAnswers`. To keep questionnaire entity always valid we implement `isValid` method and instead of `goto` we use  `gotoIfValid` to progress to the new state.
 
-The `HungerSolution` trait and object model enumeration of options. 
+The `HungerSolution`, `PizzaAllowance` and `ITRole` traits and objects model enumeration of user input options. 
+
+The `BasicPizzaAllowanceLimits` is an example of parametrising the logic of the journey using an external configuration object.
 
 ### Things to learn:
 
@@ -30,7 +68,7 @@ The `HungerSolution` trait and object model enumeration of options.
 
 ## Project content after changes
 
-Newly added files are marked with (+), modified with (*), removed with (x).
+Newly added files are marked with (+) , modified with (*) , removed with (x) .
 
     .
     ├── app
@@ -42,10 +80,16 @@ Newly added files are marked with (+), modified with (*), removed with (x).
     │                   │   ├── (*) PizzaTaxJourneyModel.scala
     │                   │   └── (+) PizzaTaxJourneyModelAlt1.scala
     │                   ├── models
+    │                   │   ├── (+) BasicPizzaAllowanceLimits.scala
+    │                   │   ├── (+) CanValidate.scala
     │                   │   ├── (+) HungerSolution.scala
+    │                   │   ├── (+) ITRole.scala
+    │                   │   ├── (+) PizzaAllowance.scala
+    │                   │   ├── (+) PizzaOrdersDeclaration.scala
+    │                   │   ├── (+) PizzaTaxStatement.scala
     │                   │   └── (+) QuestionnaireAnswers.scala
     │                   └── utils
-    │                       └── (+) OptionOps.scala
+    │                       └── OptionOps.scala
     ├── project
     │   ├── build.properties
     │   └── plugins.sbt
@@ -57,11 +101,13 @@ Newly added files are marked with (+), modified with (*), removed with (x).
     │                   ├── journeys
     │                   │   ├── (+) PizzaTaxJourneyModelAlt1Spec.scala
     │                   │   └── (*) PizzaTaxJourneyModelSpec.scala
-    │                   └── support
-    │                       ├── DummyContext.scala
-    │                       ├── InMemoryStore.scala
-    │                       ├── JourneyModelSpec.scala
-    │                       └── TestJourneyService.scala
+    │                   ├── support
+    │                   │   ├── DummyContext.scala
+    │                   │   ├── InMemoryStore.scala
+    │                   │   ├── JourneyModelSpec.scala
+    │                   │   └── TestJourneyService.scala
+    │                   └── utils
+    │                       └── (+) OptionOpsSpec.scala
     ├── LICENSE
     ├── README.md
     ├── build.sbt
