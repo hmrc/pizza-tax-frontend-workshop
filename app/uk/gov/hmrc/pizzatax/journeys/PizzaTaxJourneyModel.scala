@@ -18,6 +18,8 @@ package uk.gov.hmrc.pizzatax.journeys
 
 import uk.gov.hmrc.pizzatax.models._
 import uk.gov.hmrc.play.fsm.JourneyModel
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
 object PizzaTaxJourneyModel extends JourneyModel {
 
@@ -51,9 +53,18 @@ object PizzaTaxJourneyModel extends JourneyModel {
       itRoleOpt: Option[ITRole] = None
     ) extends State
 
-    case class TaxStatementConfirmation(statement: PizzaTaxStatement) extends EndState
+    case class TaxStatementConfirmation(
+      pizzaOrders: PizzaOrdersDeclaration,
+      pizzaAllowance: PizzaAllowance,
+      itRoleOpt: Option[ITRole],
+      correlationId: String,
+      amountOfTaxDue: Int
+    ) extends EndState
 
   }
+
+  type PizzaTaxAssessmentAPI =
+    PizzaTaxAssessmentRequest => Future[PizzaTaxAssessmentResponse]
 
   /** This is where things happen a.k.a bussiness logic of the service. */
   object Transitions {
@@ -120,6 +131,17 @@ object PizzaTaxJourneyModel extends JourneyModel {
       Transition {
         case WhatIsYourITRole(pizzaOrders) =>
           goto(QuestionnaireSummary(pizzaOrders, PizzaAllowance.ITWorker, Some(itRole)))
+      }
+
+    final def submitPizzaTaxAssessment(pizzaTaxAssessmentAPI: PizzaTaxAssessmentAPI)(implicit ec: ExecutionContext) =
+      Transition {
+        case QuestionnaireSummary(pizzaOrders, pizzaAllowance, itRoleOpt)
+            if pizzaAllowance != PizzaAllowance.ITWorker || itRoleOpt.isDefined =>
+          pizzaTaxAssessmentAPI(PizzaTaxAssessmentRequest(pizzaOrders, pizzaAllowance, itRoleOpt))
+            .map {
+              case PizzaTaxAssessmentResponse(confirmationId, amountOfTaxDue) =>
+                TaxStatementConfirmation(pizzaOrders, pizzaAllowance, itRoleOpt, confirmationId, amountOfTaxDue)
+            }
       }
   }
 }

@@ -21,6 +21,7 @@ import uk.gov.hmrc.pizzatax.models._
 import uk.gov.hmrc.pizzatax.support._
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModel
 
 class PizzaTaxJourneyModelAlt1Spec extends AnyWordSpec with Matchers with JourneyModelSpec {
 

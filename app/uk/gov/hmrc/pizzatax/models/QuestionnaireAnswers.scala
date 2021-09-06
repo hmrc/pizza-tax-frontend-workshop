@@ -20,14 +20,22 @@ import uk.gov.hmrc.pizzatax.utils.OptionOps._
 final case class QuestionnaireAnswers private (
   haveYouBeenHungryRecently: Option[Boolean],
   whatYouDidToAddressHunger: Option[HungerSolution],
-  didYouOrderPizzaAnyway: Option[Boolean]
+  didYouOrderPizzaAnyway: Option[Boolean],
+  pizzaOrders: Option[PizzaOrdersDeclaration],
+  pizzaAllowance: Option[PizzaAllowance],
+  itRoleOpt: Option[ITRole]
 ) extends CanValidate {
 
   override def isValid: Boolean =
     whatYouDidToAddressHunger.isEmptyOr(haveYouBeenHungryRecently.isTrue) &&
       didYouOrderPizzaAnyway.isEmptyOr(
         haveYouBeenHungryRecently.isFalse || whatYouDidToAddressHunger.exists(_ != HungerSolution.OrderPizza)
-      )
+      ) &&
+      pizzaOrders.isEmptyOr(
+        whatYouDidToAddressHunger.exists(_ == HungerSolution.OrderPizza) || didYouOrderPizzaAnyway.isTrue
+      ) &&
+      pizzaAllowance.isEmptyOr(pizzaOrders.isDefined) &&
+      itRoleOpt.isEmptyOr(pizzaAllowance.exists(_ == PizzaAllowance.ITWorker))
 
   def withHaveYouBeenHungryRecently(b: Boolean): QuestionnaireAnswers =
     copy(haveYouBeenHungryRecently = Some(b))
@@ -48,15 +56,28 @@ object QuestionnaireAnswers {
     QuestionnaireAnswers(
       haveYouBeenHungryRecently = None,
       whatYouDidToAddressHunger = None,
-      didYouOrderPizzaAnyway = None
+      didYouOrderPizzaAnyway = None,
+      pizzaOrders = None,
+      pizzaAllowance = None,
+      itRoleOpt = None
     )
 
-  val allPossibleQ13e: Set[QuestionnaireAnswers] =
+  lazy val allPossibleQ13e: Set[QuestionnaireAnswers] =
     (for {
       haveYouBeenHungryRecently <- options(true, false)
       whatYouDidToAddressHunger <- options(HungerSolution.values)
       didYouOrderPizzaAnyway    <- options(true, false)
-    } yield QuestionnaireAnswers(haveYouBeenHungryRecently, whatYouDidToAddressHunger, didYouOrderPizzaAnyway))
+      pizzaOrders               <- options((1 to 10).map(PizzaOrdersDeclaration.apply).toSet)
+      pizzaAllowance            <- options(PizzaAllowance.values)
+      itRoleOpt                 <- options(ITRole.values)
+    } yield QuestionnaireAnswers(
+      haveYouBeenHungryRecently,
+      whatYouDidToAddressHunger,
+      didYouOrderPizzaAnyway,
+      pizzaOrders,
+      pizzaAllowance,
+      itRoleOpt
+    ))
       .filter(_.isValid)
       .toSet
 }

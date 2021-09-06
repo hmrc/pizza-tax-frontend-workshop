@@ -21,6 +21,10 @@ import uk.gov.hmrc.pizzatax.models._
 import uk.gov.hmrc.pizzatax.support._
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Random
+import java.util.UUID
 
 class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyModelSpec {
 
@@ -164,6 +168,64 @@ class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyMod
                 itRoleOpt = Some(itRole)
               )
             )
+      }
+    }
+
+    "at state QuestionnaireSummary" should {
+      "go to TaxStatementConfirmation when submited assesment and API call returns the calculation" in {
+        val amountOfTaxDue = Random.nextInt
+        val confirmationId = UUID.randomUUID().toString()
+        val pizzaTaxAssessmentAPI: model.PizzaTaxAssessmentAPI =
+          (r: PizzaTaxAssessmentRequest) =>
+            Future.successful(PizzaTaxAssessmentResponse(confirmationId, amountOfTaxDue))
+
+        for {
+          pizzaOrders    <- (1 to 10).map(PizzaOrdersDeclaration.apply)
+          pizzaAllowance <- PizzaAllowance.values
+          itRoleOpt <- pizzaAllowance match {
+                         case PizzaAllowance.ITWorker => ITRole.values.map(Option.apply)
+                         case _                       => Set(None)
+                       }
+        } given(
+          State.QuestionnaireSummary(
+            pizzaOrders,
+            pizzaAllowance,
+            itRoleOpt
+          )
+        ).when(Transitions.submitPizzaTaxAssessment(pizzaTaxAssessmentAPI))
+          .thenGoes(
+            State.TaxStatementConfirmation(
+              pizzaOrders,
+              pizzaAllowance,
+              itRoleOpt,
+              confirmationId,
+              amountOfTaxDue
+            )
+          )
+      }
+
+      "pass an exception when API call fails" in {
+        {
+          val expectedException = new Exception()
+          val pizzaTaxAssessmentAPI: model.PizzaTaxAssessmentAPI =
+            (r: PizzaTaxAssessmentRequest) => Future.failed(expectedException)
+          for {
+            pizzaOrders    <- (1 to 10).map(PizzaOrdersDeclaration.apply)
+            pizzaAllowance <- PizzaAllowance.values
+            itRoleOpt <- pizzaAllowance match {
+                           case PizzaAllowance.ITWorker => ITRole.values.map(Option.apply)
+                           case _                       => Set(None)
+                         }
+          } given(
+            State.QuestionnaireSummary(
+              pizzaOrders,
+              pizzaAllowance,
+              itRoleOpt
+            )
+          )
+            .when(Transitions.submitPizzaTaxAssessment(pizzaTaxAssessmentAPI))
+            .thenFailsWith[expectedException.type]
+        }
       }
     }
   }

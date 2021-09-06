@@ -30,7 +30,7 @@ object OptionOps {
     def isEmptyOr(f: => Boolean): Boolean = checkIfDefined(o1, (_: Any) => f)
   }
 
-  def options[A](set: Set[A]): Iterable[Option[A]] =
+  def options[A](set: Set[A]): Set[Option[A]] =
     set.map(Option.apply(_)) + None
 
   def options[A](values: A*): Iterable[Option[A]] =

@@ -16,12 +16,4 @@
 
 package uk.gov.hmrc.pizzatax.models
 
-final case class PizzaTaxStatement(
-  totalNumberOfPizzas: Int,
-  pizzaAllowance: PizzaAllowance,
-  itRoleOpt: Option[ITRole],
-  confirmationId: String,
-  amountOfTaxDue: Int
-)
-
-object PizzaTaxStatement
+final case class PizzaTaxAssessmentResponse(confirmationId: String, amountOfTaxDue: Int)

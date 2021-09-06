@@ -6,11 +6,11 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 
 - 00 [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
-- **02 [further extend journey model and explore alternatives](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)**
+- **02 [further elaborate the model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)**
 
 ## Step 02 - Extend journey model and explore alternatives
 
-In this step we elaborate the model by adding new states and transitions.
+In this step we elaborate the model by adding new states and transitions, to match given user flow diagram:
 
                         ┌─────────┐
                         │  Start  │
@@ -44,22 +44,26 @@ In this step we elaborate the model by adding new states and transitions.
                   │                 │      │      │
                   │                 ▼      ▼      ▼
                   │              QuestionnaireSummary
-                  │                        │
-                  │                        │
+                  │                        │               ┌─────────────┐
+                  │                        ├──calculate───►│ Backend API │
+                  │                        │               └─────────────┘
     ┌─────────────▼────────┐    ┌──────────▼─────────────┐
     │NotEligibleForPizzaTax│    │TaxStatementConfirmation│
-    └──────────────────────┘    └────────────────────────┘ 
+    └──────────────────────┘    └────────────────────────┘
 
 In the `PizzaTaxJourneyModelAlt1` we explore an alternative design of the journey model where all answers are explicitly remembered in the `QuestionnaireAnswers` object in optional fields. We let questionaire states extend the helper trait `HasAnswers`. To keep questionnaire entity always valid we implement `isValid` method and instead of `goto` we use  `gotoIfValid` to progress to the new state.
 
 The `HungerSolution`, `PizzaAllowance` and `ITRole` traits and objects model enumeration of user input options. 
 
-The `BasicPizzaAllowanceLimits` is an example of parametrising the logic of the journey using an external configuration object.
+The `BasicPizzaAllowanceLimits` is an example of parametrising the model with an external configuration.
+
+Abstract type `PizzaTaxAssessmentAPI` is an example of modeling dependency of an external API call.
 
 ### Things to learn:
 
 - Each journey model has its own types of `State` and `Transition`,
 - States can reference external classes, e.g. `QuestionnaireAnswers`,
+- One can declare transition as a value, but one can also decalre it as  a function taking parameters representing external configuration or an external API function.
 - There are multiple ways of encoding similar journey model, depending on the amount of information we want to keep. 
 
 ## Project content after changes
@@ -82,7 +86,8 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │                   │   ├── (+) ITRole.scala
     │                   │   ├── (+) PizzaAllowance.scala
     │                   │   ├── (+) PizzaOrdersDeclaration.scala
-    │                   │   ├── (+) PizzaTaxStatement.scala
+    │                   │   ├── (+) PizzaTaxAssessmentRequest.scala
+    │                   │   ├── (+) PizzaTaxAssessmentResponse.scala
     │                   │   └── (+) QuestionnaireAnswers.scala
     │                   └── utils
     │                       └── OptionOps.scala

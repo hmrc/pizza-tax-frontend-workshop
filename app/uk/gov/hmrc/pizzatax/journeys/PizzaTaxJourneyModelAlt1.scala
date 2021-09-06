@@ -45,13 +45,21 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
     trait EndState extends State
 
     case class HaveYouBeenHungryRecently(answers: QuestionnaireAnswers) extends HaveAnswers
-
     case class WhatYouDidToAddressHunger(answers: QuestionnaireAnswers) extends HaveAnswers
-
     case class DidYouOrderPizzaAnyway(answers: QuestionnaireAnswers) extends HaveAnswers
-
     case class NotEligibleForPizzaTax(answers: QuestionnaireAnswers) extends HaveAnswers with EndState
+    case class HowManyPizzasDidYouOrder(answers: QuestionnaireAnswers) extends HaveAnswers with State
+    case class AreYouEligibleForSpecialAllowance(answers: QuestionnaireAnswers) extends HaveAnswers with State
+    case class WhatIsYourITRole(answers: QuestionnaireAnswers) extends HaveAnswers with State
+    case class QuestionnaireSummary(answers: QuestionnaireAnswers) extends HaveAnswers with State
 
+    case class TaxStatementConfirmation(
+      pizzaOrders: PizzaOrdersDeclaration,
+      pizzaAllowance: PizzaAllowance,
+      itRoleOpt: Option[ITRole],
+      correlationId: String,
+      amountOfTaxDue: Int
+    ) extends EndState
   }
 
   /** Validate entity, apply and go to the new state, otherwise stay. */
