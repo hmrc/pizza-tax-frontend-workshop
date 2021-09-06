@@ -8,9 +8,9 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
 - **02 [further extend journey model and explore alternatives](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)**
 
-## Goal
+## Step 02 - Extend journey model and explore alternatives
 
-Elaborate the model and explore alternatives.
+In this step we elaborate the model by adding new states and transitions.
 
                         ┌─────────┐
                         │  Start  │
@@ -48,11 +48,7 @@ Elaborate the model and explore alternatives.
                   │                        │
     ┌─────────────▼────────┐    ┌──────────▼─────────────┐
     │NotEligibleForPizzaTax│    │TaxStatementConfirmation│
-    └──────────────────────┘    └────────────────────────┘
-
-## Step 02 - Extend journey model and explore alternatives
-
-In this step we extend the model by adding new states and transitions. 
+    └──────────────────────┘    └────────────────────────┘ 
 
 In the `PizzaTaxJourneyModelAlt1` we explore an alternative design of the journey model where all answers are explicitly remembered in the `QuestionnaireAnswers` object in optional fields. We let questionaire states extend the helper trait `HasAnswers`. To keep questionnaire entity always valid we implement `isValid` method and instead of `goto` we use  `gotoIfValid` to progress to the new state.
 
