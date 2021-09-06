@@ -56,7 +56,7 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
 
   /** Validate entity, apply and go to the new state, otherwise stay. */
   final def gotoIfValid[B <: CanValidate](f: B => State)(b: B): Future[State] =
-    if (b.isValid) goto(f(b)) else stay[State]
+    if (b.isValid) goto(f(b)) else stay
 
   /** This is where things happen a.k.a bussiness logic of the service. */
   object Transitions {
