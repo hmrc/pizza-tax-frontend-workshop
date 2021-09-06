@@ -8,9 +8,10 @@ An imaginary pizza tax service demonstrating how to build a frontend microservic
 - **01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)**
 - 02 [further extend journey model and explore alternatives](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)
 
-## Goal
+## Step 01 - Create an initial journey model
 
-Create initial journey modelling the YES/NO question.
+In this step we build our initial journey model in `PizzaTaxJourneyModel` object, 
+and we show how to unit test it in `PizzaTaxJourneyModelSpec` specification.
 
 ```
                      Start
@@ -23,11 +24,6 @@ Create initial journey modelling the YES/NO question.
             ▼                     ▼
 WorkInProgressDeadEnd     WorkInProgressDeadEnd
 ```
-
-## Step 01 - Create an initial journey model
-
-In this step we define our initial journey model in `PizzaTaxJourneyModel` object, 
-and we test it in `PizzaTaxJourneyModelSpec` specification.
 
 The key principle of `fsm` is that one can move from state to state only by applying the transition. Because of this it is required for all states and transtions to be defined inside the single object inheriting from `JourneyModel`.
 
