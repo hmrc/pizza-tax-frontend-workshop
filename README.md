@@ -74,17 +74,17 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │                   │   ├── (*) PizzaTaxJourneyModel.scala
     │                   │   └── (+) PizzaTaxJourneyModelAlt1.scala
     │                   ├── models
-    │                   │   ├── (+) BasicPizzaAllowanceLimits.scala
+    │                   │   ├── BasicPizzaAllowanceLimits.scala
     │                   │   ├── (+) CanValidate.scala
-    │                   │   ├── (+) HungerSolution.scala
-    │                   │   ├── (+) ITRole.scala
-    │                   │   ├── (+) PizzaAllowance.scala
-    │                   │   ├── (+) PizzaOrdersDeclaration.scala
-    │                   │   ├── (+) PizzaTaxAssessmentRequest.scala
-    │                   │   ├── (+) PizzaTaxAssessmentResponse.scala
+    │                   │   ├── HungerSolution.scala
+    │                   │   ├── ITRole.scala
+    │                   │   ├── PizzaAllowance.scala
+    │                   │   ├── PizzaOrdersDeclaration.scala
+    │                   │   ├── PizzaTaxAssessmentRequest.scala
+    │                   │   ├── PizzaTaxAssessmentResponse.scala
     │                   │   └── (+) QuestionnaireAnswers.scala
     │                   └── utils
-    │                       └── OptionOps.scala
+    │                       └── (+) OptionOps.scala
     ├── project
     │   ├── build.properties
     │   └── plugins.sbt
