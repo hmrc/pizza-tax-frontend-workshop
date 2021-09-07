@@ -21,38 +21,50 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import uk.gov.hmrc.play.fsm.PersistentJourneyService
+import java.util.concurrent.atomic.AtomicInteger
 
-trait TestJourneyService[HC] extends PersistentJourneyService[HC] {
+trait TestJourneyService[RequestContext] extends PersistentJourneyService[RequestContext] {
 
   override val journeyKey: String = "TestJourney"
 
+  private val counter: AtomicInteger = new AtomicInteger(0)
+
   val storage = new InMemoryStore[(model.State, List[model.State])] {}
 
+  override def apply(
+    transition: model.Transition
+  )(implicit rc: RequestContext, ec: ExecutionContext): Future[StateAndBreadcrumbs] = {
+    counter.incrementAndGet()
+    super.apply(transition)(rc, ec)
+  }
+
   override def fetch(implicit
-    hc: HC,
+    hc: RequestContext,
     ec: ExecutionContext
   ): Future[Option[(model.State, List[model.State])]] = storage.fetch
 
   override def save(
     state: (model.State, List[model.State])
-  )(implicit hc: HC, ec: ExecutionContext): Future[(model.State, List[model.State])] =
+  )(implicit hc: RequestContext, ec: ExecutionContext): Future[(model.State, List[model.State])] =
     storage.save(state)
 
   def set(state: model.State, breadcrumbs: List[model.State])(implicit
-    headerCarrier: HC,
+    headerCarrier: RequestContext,
     timeout: Duration,
     ec: ExecutionContext
   ): Unit =
     Await.result(save((state, breadcrumbs)), timeout)
 
   def get(implicit
-    headerCarrier: HC,
+    headerCarrier: RequestContext,
     timeout: Duration,
     ec: ExecutionContext
   ): Option[StateAndBreadcrumbs] =
     Await.result(fetch, timeout)
 
-  override def clear(implicit hc: HC, ec: ExecutionContext): Future[Unit] =
+  override def clear(implicit hc: RequestContext, ec: ExecutionContext): Future[Unit] =
     Future.successful(storage.clear())
+
+  def getCounter(): Int = counter.get()
 
 }

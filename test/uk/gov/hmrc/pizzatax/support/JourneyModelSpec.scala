@@ -27,6 +27,8 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import org.scalactic.source
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.Informing
 
 /**
   * Abstract base of FSM journey specifications.
@@ -52,7 +54,7 @@ import org.scalactic.source
   *     .thenFailsWith[SomeExceptionType]
   */
 trait JourneyModelSpec extends TestJourneyService[DummyContext] {
-  self: Matchers =>
+  self: Matchers with BeforeAndAfterAll with Informing =>
 
   val model: JourneyModel
 
@@ -206,5 +208,10 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
             MatchResult(true, "", s"")
         }
     }
+
+  // Delete the temp file
+  override def afterAll() {
+    info(s"Test suite executed ${getCounter()} state transitions in total.")
+  }
 
 }

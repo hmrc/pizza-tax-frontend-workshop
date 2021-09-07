@@ -19,8 +19,8 @@ package uk.gov.hmrc.pizzatax.utils
 object OptionOps {
 
   implicit class OptionBooleanExt(val o: Option[Boolean]) extends AnyVal {
-    def isTrue: Boolean = o.exists(b => b == true)
-    def isFalse: Boolean = o.exists(b => b == false)
+    def isTrue: Boolean = o.contains(true)
+    def isFalse: Boolean = o.contains(false)
   }
 
   implicit class OptionExt[A](val o1: Option[A]) extends AnyVal {
@@ -28,6 +28,7 @@ object OptionOps {
     def isDisjoint(o2: Option[Any]): Boolean = checkDisjoint(o1, o2)
     def isEmptyOr(f: A => Boolean): Boolean = checkIfDefined(o1, f)
     def isEmptyOr(f: => Boolean): Boolean = checkIfDefined(o1, (_: Any) => f)
+    def containsNot(a: A): Boolean = o1.exists(_ != a)
   }
 
   def options[A](set: Set[A]): Set[Option[A]] =

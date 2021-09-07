@@ -32,10 +32,13 @@ final case class QuestionnaireAnswers private (
         haveYouBeenHungryRecently.isFalse || whatYouDidToAddressHunger.exists(_ != HungerSolution.OrderPizza)
       ) &&
       pizzaOrders.isEmptyOr(
-        whatYouDidToAddressHunger.exists(_ == HungerSolution.OrderPizza) || didYouOrderPizzaAnyway.isTrue
+        (whatYouDidToAddressHunger.exists(_ == HungerSolution.OrderPizza) || didYouOrderPizzaAnyway.isTrue)
       ) &&
       pizzaAllowance.isEmptyOr(pizzaOrders.isDefined) &&
       itRoleOpt.isEmptyOr(pizzaAllowance.exists(_ == PizzaAllowance.ITWorker))
+
+  def empty: QuestionnaireAnswers =
+    QuestionnaireAnswers.empty
 
   def withHaveYouBeenHungryRecently(b: Boolean): QuestionnaireAnswers =
     copy(haveYouBeenHungryRecently = Some(b))
@@ -48,6 +51,18 @@ final case class QuestionnaireAnswers private (
 
   def withDidYouOrderPizzaAnyway(b: Boolean): QuestionnaireAnswers =
     copy(didYouOrderPizzaAnyway = Some(b))
+
+  def withPizzaOrders(pizzaOrders: PizzaOrdersDeclaration): QuestionnaireAnswers =
+    copy(pizzaOrders = Some(pizzaOrders))
+
+  def withPizzaAllowance(pizzaAllowance: PizzaAllowance): QuestionnaireAnswers =
+    copy(pizzaAllowance = Some(pizzaAllowance))
+
+  def withITRole(itRole: ITRole): QuestionnaireAnswers =
+    copy(itRoleOpt = Some(itRole))
+
+  def withITRoleOpt(itRoleOpt: Option[ITRole]): QuestionnaireAnswers =
+    copy(itRoleOpt = itRoleOpt)
 }
 
 object QuestionnaireAnswers {
@@ -62,7 +77,7 @@ object QuestionnaireAnswers {
       itRoleOpt = None
     )
 
-  lazy val allPossibleQ13e: Set[QuestionnaireAnswers] =
+  lazy val allValidQ13e: Set[QuestionnaireAnswers] =
     (for {
       haveYouBeenHungryRecently <- options(true, false)
       whatYouDidToAddressHunger <- options(HungerSolution.values)

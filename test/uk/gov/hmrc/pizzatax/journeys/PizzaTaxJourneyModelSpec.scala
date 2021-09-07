@@ -25,8 +25,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Random
 import java.util.UUID
+import org.scalatest.BeforeAndAfterAll
 
-class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with JourneyModelSpec {
+class PizzaTaxJourneyModelSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll with JourneyModelSpec {
 
   override val model = PizzaTaxJourneyModel
 

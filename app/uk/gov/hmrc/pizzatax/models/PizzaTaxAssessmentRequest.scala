@@ -21,3 +21,17 @@ final case class PizzaTaxAssessmentRequest(
   pizzaAllowance: PizzaAllowance,
   itRoleOpt: Option[ITRole] = None
 )
+
+object PizzaTaxAssessmentRequest {
+
+  object create {
+    def unapply(q: QuestionnaireAnswers): Option[PizzaTaxAssessmentRequest] =
+      q match {
+        case QuestionnaireAnswers(_, _, _, Some(pizzaOrders), Some(pizzaAllowance), itRoleOpt)
+            if q.isValid && (pizzaAllowance != PizzaAllowance.ITWorker || itRoleOpt.isDefined) =>
+          Some(PizzaTaxAssessmentRequest(pizzaOrders, pizzaAllowance, itRoleOpt))
+        case _ => None
+      }
+  }
+
+}

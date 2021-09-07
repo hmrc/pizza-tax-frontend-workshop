@@ -17,8 +17,10 @@
 package uk.gov.hmrc.pizzatax.journeys
 
 import uk.gov.hmrc.pizzatax.models._
-import uk.gov.hmrc.pizzatax.utils.OptionOps._
 import uk.gov.hmrc.play.fsm.JourneyModel
+import uk.gov.hmrc.pizzatax.utils.OptionOps._
+
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object PizzaTaxJourneyModelAlt1 extends JourneyModel {
@@ -62,6 +64,9 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
     ) extends EndState
   }
 
+  type PizzaTaxAssessmentAPI =
+    PizzaTaxAssessmentRequest => Future[PizzaTaxAssessmentResponse]
+
   /** Validate entity, apply and go to the new state, otherwise stay. */
   final def gotoIfValid[B <: CanValidate](f: B => State)(b: B): Future[State] =
     if (b.isValid) goto(f(b)) else stay
@@ -80,17 +85,16 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
       Transition {
         case HaveYouBeenHungryRecently(q) =>
           if (confirmed)
-            gotoIfValid(WhatYouDidToAddressHunger)(q.withHaveYouBeenHungryRecently(true))
+            if (q.haveYouBeenHungryRecently.isTrue)
+              goto(WhatYouDidToAddressHunger(q)) // no change
+            else
+              gotoIfValid(WhatYouDidToAddressHunger)(q.withHaveYouBeenHungryRecently(true))
+          else if (q.haveYouBeenHungryRecently.isFalse)
+            goto(DidYouOrderPizzaAnyway(q)) // no change
           else
-            gotoIfValid(DidYouOrderPizzaAnyway)(q.withHaveYouBeenHungryRecently(false))
-      }
-
-    final val backToHaveYouBeenHungryRecently =
-      Transition {
-        case WhatYouDidToAddressHunger(q) =>
-          goto(HaveYouBeenHungryRecently(q))
-        case DidYouOrderPizzaAnyway(q) if q.whatYouDidToAddressHunger.isEmpty =>
-          goto(HaveYouBeenHungryRecently(q))
+            gotoIfValid(DidYouOrderPizzaAnyway)(
+              q.empty.withHaveYouBeenHungryRecently(false)
+            )
       }
 
     final def submittedWhatYouDidToAddressHunger(solution: HungerSolution) =
@@ -98,25 +102,124 @@ object PizzaTaxJourneyModelAlt1 extends JourneyModel {
         case WhatYouDidToAddressHunger(q) =>
           solution match {
             case HungerSolution.OrderPizza =>
-              goto(WorkInProgressDeadEnd)
+              if (q.whatYouDidToAddressHunger.contains(solution))
+                goto(HowManyPizzasDidYouOrder(q)) // no change
+              else
+                gotoIfValid(HowManyPizzasDidYouOrder)(q.withWhatYouDidToAddressHunger(HungerSolution.OrderPizza))
             case _ =>
-              gotoIfValid(DidYouOrderPizzaAnyway)(q.withWhatYouDidToAddressHunger(solution))
+              if (q.whatYouDidToAddressHunger.contains(solution))
+                goto(DidYouOrderPizzaAnyway(q)) // no change
+              else
+                gotoIfValid(DidYouOrderPizzaAnyway)(q.withWhatYouDidToAddressHunger(solution))
           }
-      }
-
-    final val backToWhatYouDidToAddressHunger =
-      Transition {
-        case DidYouOrderPizzaAnyway(q) if q.whatYouDidToAddressHunger.isDefined =>
-          goto(WhatYouDidToAddressHunger(q))
       }
 
     final def submittedDidYouOrderPizzaAnyway(confirmed: Boolean) =
       Transition {
         case DidYouOrderPizzaAnyway(q) =>
           if (confirmed)
-            goto(WorkInProgressDeadEnd)
+            if (q.didYouOrderPizzaAnyway.isTrue)
+              goto(HowManyPizzasDidYouOrder(q)) // no change
+            else
+              gotoIfValid(HowManyPizzasDidYouOrder)(q.withDidYouOrderPizzaAnyway(true))
+          else if (q.didYouOrderPizzaAnyway.isFalse)
+            goto(NotEligibleForPizzaTax(q)) // no change
           else
             gotoIfValid(NotEligibleForPizzaTax)(q.withDidYouOrderPizzaAnyway(false))
       }
+
+    final def submittedHowManyPizzasDidYouOrder(
+      limits: BasicPizzaAllowanceLimits
+    )(pizzaOrders: PizzaOrdersDeclaration) =
+      Transition {
+        case HowManyPizzasDidYouOrder(q) =>
+          if (limits.areNotExceededBy(pizzaOrders))
+            if (q.pizzaOrders.contains(pizzaOrders))
+              goto(QuestionnaireSummary(q)) // no change
+            else
+              gotoIfValid(QuestionnaireSummary)(q.withPizzaOrders(pizzaOrders).withPizzaAllowance(PizzaAllowance.Basic))
+          else if (q.pizzaOrders.contains(pizzaOrders))
+            goto(AreYouEligibleForSpecialAllowance(q)) // no change
+          else
+            gotoIfValid(AreYouEligibleForSpecialAllowance)(q.withPizzaOrders(pizzaOrders))
+      }
+
+    final def submittedAreYouEligibleForSpecialAllowance(pizzaAllowance: PizzaAllowance) =
+      Transition {
+        case AreYouEligibleForSpecialAllowance(q) =>
+          pizzaAllowance match {
+            case PizzaAllowance.ITWorker =>
+              if (q.pizzaAllowance.contains(pizzaAllowance))
+                goto(WhatIsYourITRole(q)) // no change
+              else
+                gotoIfValid(WhatIsYourITRole)(q.withPizzaAllowance(PizzaAllowance.ITWorker))
+            case _ =>
+              if (q.pizzaAllowance.contains(pizzaAllowance))
+                goto(QuestionnaireSummary(q)) // no change
+              else
+                gotoIfValid(QuestionnaireSummary)(q.withPizzaAllowance(pizzaAllowance))
+          }
+      }
+
+    final def submittedWhatIsYourITRole(itRole: ITRole) =
+      Transition {
+        case WhatIsYourITRole(q) =>
+          gotoIfValid(QuestionnaireSummary)(q.withITRole(itRole))
+      }
+
+    final def submitPizzaTaxAssessment(pizzaTaxAssessmentAPI: PizzaTaxAssessmentAPI)(implicit ec: ExecutionContext) =
+      Transition {
+        case QuestionnaireSummary(PizzaTaxAssessmentRequest.create(request)) =>
+          pizzaTaxAssessmentAPI(request)
+            .map {
+              case PizzaTaxAssessmentResponse(confirmationId, amountOfTaxDue) =>
+                TaxStatementConfirmation(
+                  request.pizzaOrders,
+                  request.pizzaAllowance,
+                  request.itRoleOpt,
+                  confirmationId,
+                  amountOfTaxDue
+                )
+            }
+      }
+
+    final val backToHaveYouBeenHungryRecently =
+      Transition {
+        case QuestionnaireSummary(q)                                          => goto(HaveYouBeenHungryRecently(q))
+        case WhatYouDidToAddressHunger(q)                                     => goto(HaveYouBeenHungryRecently(q))
+        case DidYouOrderPizzaAnyway(q) if q.whatYouDidToAddressHunger.isEmpty => goto(HaveYouBeenHungryRecently(q))
+      }
+
+    final val backToWhatYouDidToAddressHunger =
+      Transition {
+        case QuestionnaireSummary(q)                                            => goto(WhatYouDidToAddressHunger(q))
+        case DidYouOrderPizzaAnyway(q) if q.whatYouDidToAddressHunger.isDefined => goto(WhatYouDidToAddressHunger(q))
+        case HowManyPizzasDidYouOrder(q)                                        => goto(WhatYouDidToAddressHunger(q))
+      }
+
+    final val backToDidYouOrderPizzaAnyway =
+      Transition {
+        case QuestionnaireSummary(q)                                        => goto(DidYouOrderPizzaAnyway(q))
+        case NotEligibleForPizzaTax(q)                                      => goto(DidYouOrderPizzaAnyway(q))
+        case HowManyPizzasDidYouOrder(q) if q.didYouOrderPizzaAnyway.isTrue => goto(DidYouOrderPizzaAnyway(q))
+      }
+
+    final val backToHowManyPizzasDidYouOrder =
+      Transition {
+        case QuestionnaireSummary(q)              => goto(HowManyPizzasDidYouOrder(q))
+        case AreYouEligibleForSpecialAllowance(q) => goto(HowManyPizzasDidYouOrder(q))
+      }
+
+    final val backToAreYouEligibleForSpecialAllowance =
+      Transition {
+        case QuestionnaireSummary(q) => goto(AreYouEligibleForSpecialAllowance(q))
+        case WhatIsYourITRole(q)     => goto(AreYouEligibleForSpecialAllowance(q))
+      }
+
+    final val backToWhatIsYourITRole =
+      Transition {
+        case QuestionnaireSummary(q) => goto(WhatIsYourITRole(q))
+      }
+
   }
 }
