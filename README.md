@@ -54,7 +54,7 @@ The aim of the workshop is to build step-by-step a frontend microservice impleme
     │NotEligibleForPizzaTax│    │TaxStatementConfirmation│
     └──────────────────────┘    └────────────────────────┘
 
-## Project content
+## Empty project content
 
     .
     ├── project
