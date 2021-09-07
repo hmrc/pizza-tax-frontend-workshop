@@ -2,13 +2,57 @@
 
 # pizza-tax-frontend workshop
 
-An imaginary pizza tax service demonstrating how to build a frontend microservice using [play-fsm](https://github.com/hmrc/play-fsm).
+An imaginary pizza tax service showcasing how to build a frontend microservice using [play-fsm](https://github.com/hmrc/play-fsm).
 
 ## Workshop steps
 
 - **00 [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)**
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
-- 02 [further extend journey model and explore alternatives](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)
+- 02 [further elaborate the model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)
+- 03 [alternative model designs](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-03-alternative-model-design#readme)
+
+## Goal
+
+The aim of the workshop is to build step-by-step a frontend microservice implementing the user flow presented on the chart:
+
+                        ┌─────────┐
+                        │  Start  │
+                        └────┬────┘
+                             │
+                             ▼
+                 HaveYouBeenHungryRecently
+                             │
+                  ┌────no────┴────yes───┐
+                  │                     ▼
+                  │              WhatYouDidToAddressHunger
+                  │                     │
+                  │ ┌──other────────────┴───┐
+                  │ │                       │
+                  ▼ ▼                 HungerSolution
+        DidYouOrderPizzaAnyway        == OrderPizza
+                  │                         │
+                  ├───yes─────────────────┐ │
+                  │                       ▼ ▼
+                  │              HowManyPizzasDidYouOrder
+                  │                         │
+                  no                ┌───L───┴───H────┐
+                  │                 │                ▼
+                  │                 │    AreYouEligibleForSpecialAllowance
+                  │                 │                │
+                  │                 │      ┌──other──┴─ITWorker──┐
+                  │                 │      │                     ▼
+                  │                 │      │              WhatIsYourITRole
+                  │                 │      │                     │
+                  │                 │      │      ┌──────────────┘
+                  │                 │      │      │
+                  │                 ▼      ▼      ▼
+                  │              QuestionnaireSummary
+                  │                        │               ┌─────────────┐
+                  │                        ├──calculate───►│ Backend API │
+                  │                        │               └─────────────┘
+    ┌─────────────▼────────┐    ┌──────────▼─────────────┐
+    │NotEligibleForPizzaTax│    │TaxStatementConfirmation│
+    └──────────────────────┘    └────────────────────────┘
 
 ## Project content
 
