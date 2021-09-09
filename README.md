@@ -18,7 +18,7 @@ In this step we add and test components required to persist the journey state in
 
 - Each journey model needs a concrete `JourneyService` instance to be useful to the final application,
 - in a web application like our frontend the state has to be persisted between HTTP requests so we use specialized `PersistentJourneyService` interface,
-- how to persist the state is not a concern of `play-fsm` itself, each application have to decide what would work best,
+- how to persist the state is not a concern of `play-fsm` itself, each application has to decide what would work best,
 - in our service we build state persistence mechanism based on the `CacheRepository` interface from the `hmrc-mongo` library,
 - since our serialization is JSON-based we have to define `Format[State]` typeclass instance, this is where` JsonStateFormats[State]` helps,
 - a generic trait `JourneyCache` is responsible for orchestrating all cache read-write operations in a locally sequential manner for each unique `journeyId` key,
