@@ -28,7 +28,7 @@ import play.api.libs.json.JsValue
 
 /**
   * Journey persistence service mixin,
-  * stores encrypted serialized state using SessionCache.
+  * stores encrypted serialized state using [[JourneyCache]].
   */
 trait MongoDBCachedJourneyService[RequestContext] extends PersistentJourneyService[RequestContext] {
 

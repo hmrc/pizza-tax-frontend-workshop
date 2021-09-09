@@ -20,7 +20,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.JsResultException
 import play.api.libs.json.Json
 import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModel.State
-import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyStateFormats
+import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModelFormats
 import uk.gov.hmrc.pizzatax.support.JsonFormatTest
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,9 +28,9 @@ import uk.gov.hmrc.pizzatax.models.PizzaOrdersDeclaration
 import uk.gov.hmrc.pizzatax.models.PizzaAllowance
 import uk.gov.hmrc.pizzatax.models.ITRole
 
-class PizzaTaxJourneyStateFormatsSpec extends AnyWordSpec with Matchers {
+class PizzaTaxJourneyModelFormatsSpec extends AnyWordSpec with Matchers {
 
-  implicit val formats: Format[State] = PizzaTaxJourneyStateFormats.formats
+  implicit val formats: Format[State] = PizzaTaxJourneyModelFormats.formats
 
   "PizzaTaxJourneyStateFormats" should {
     "serialize and deserialize state" in new JsonFormatTest[State](info) {

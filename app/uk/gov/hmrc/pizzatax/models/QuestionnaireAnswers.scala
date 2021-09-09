@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pizzatax.models
 import uk.gov.hmrc.pizzatax.utils.OptionOps._
+import play.api.libs.json.Json
 
 final case class QuestionnaireAnswers private (
   haveYouBeenHungryRecently: Option[Boolean],
@@ -66,6 +67,8 @@ final case class QuestionnaireAnswers private (
 }
 
 object QuestionnaireAnswers {
+
+  implicit val format = Json.format[QuestionnaireAnswers]
 
   val empty =
     QuestionnaireAnswers(

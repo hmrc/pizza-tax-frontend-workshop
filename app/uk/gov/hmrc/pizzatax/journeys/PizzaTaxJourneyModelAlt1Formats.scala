@@ -17,18 +17,28 @@
 package uk.gov.hmrc.pizzatax.journeys
 
 import play.api.libs.json._
-import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModel.State
-import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModel.State._
+import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModelAlt1.State
+import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModelAlt1.State._
 import uk.gov.hmrc.play.fsm.JsonStateFormats
 
-object PizzaTaxJourneyStateFormats extends JsonStateFormats[State] {
+object PizzaTaxJourneyModelAlt1Formats extends JsonStateFormats[State] {
 
+  val HaveYouBeenHungryRecentlyFormat = Json.format[HaveYouBeenHungryRecently]
+  val WhatYouDidToAddressHungerFormat = Json.format[WhatYouDidToAddressHunger]
+  val DidYouOrderPizzaAnywayFormat = Json.format[DidYouOrderPizzaAnyway]
+  val HowManyPizzasDidYouOrderFormat = Json.format[HowManyPizzasDidYouOrder]
+  val NotEligibleForPizzaTaxFormat = Json.format[NotEligibleForPizzaTax]
   val AreYouEligibleForSpecialAllowanceFormat = Json.format[AreYouEligibleForSpecialAllowance]
   val WhatIsYourITRoleFormat = Json.format[WhatIsYourITRole]
   val QuestionnaireSummaryFormat = Json.format[QuestionnaireSummary]
   val TaxStatementConfirmationFormat = Json.format[TaxStatementConfirmation]
 
   override val serializeStateProperties: PartialFunction[State, JsValue] = {
+    case s: HaveYouBeenHungryRecently         => HaveYouBeenHungryRecentlyFormat.writes(s)
+    case s: WhatYouDidToAddressHunger         => WhatYouDidToAddressHungerFormat.writes(s)
+    case s: DidYouOrderPizzaAnyway            => DidYouOrderPizzaAnywayFormat.writes(s)
+    case s: HowManyPizzasDidYouOrder          => HowManyPizzasDidYouOrderFormat.writes(s)
+    case s: NotEligibleForPizzaTax            => NotEligibleForPizzaTaxFormat.writes(s)
     case s: AreYouEligibleForSpecialAllowance => AreYouEligibleForSpecialAllowanceFormat.writes(s)
     case s: WhatIsYourITRole                  => WhatIsYourITRoleFormat.writes(s)
     case s: QuestionnaireSummary              => QuestionnaireSummaryFormat.writes(s)
@@ -38,11 +48,11 @@ object PizzaTaxJourneyStateFormats extends JsonStateFormats[State] {
   override def deserializeState(stateName: String, properties: JsValue): JsResult[State] =
     stateName match {
       case "Start"                             => JsSuccess(Start)
-      case "HaveYouBeenHungryRecently"         => JsSuccess(HaveYouBeenHungryRecently)
-      case "WhatYouDidToAddressHunger"         => JsSuccess(WhatYouDidToAddressHunger)
-      case "DidYouOrderPizzaAnyway"            => JsSuccess(DidYouOrderPizzaAnyway)
-      case "HowManyPizzasDidYouOrder"          => JsSuccess(HowManyPizzasDidYouOrder)
-      case "NotEligibleForPizzaTax"            => JsSuccess(NotEligibleForPizzaTax)
+      case "HaveYouBeenHungryRecently"         => HaveYouBeenHungryRecentlyFormat.reads(properties)
+      case "WhatYouDidToAddressHunger"         => WhatYouDidToAddressHungerFormat.reads(properties)
+      case "DidYouOrderPizzaAnyway"            => DidYouOrderPizzaAnywayFormat.reads(properties)
+      case "HowManyPizzasDidYouOrder"          => HowManyPizzasDidYouOrderFormat.reads(properties)
+      case "NotEligibleForPizzaTax"            => NotEligibleForPizzaTaxFormat.reads(properties)
       case "AreYouEligibleForSpecialAllowance" => AreYouEligibleForSpecialAllowanceFormat.reads(properties)
       case "WhatIsYourITRole"                  => WhatIsYourITRoleFormat.reads(properties)
       case "QuestionnaireSummary"              => QuestionnaireSummaryFormat.reads(properties)

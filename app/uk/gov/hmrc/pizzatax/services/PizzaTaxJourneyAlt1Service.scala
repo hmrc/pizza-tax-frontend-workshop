@@ -19,36 +19,36 @@ package uk.gov.hmrc.pizzatax.services
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Format
 import uk.gov.hmrc.crypto.ApplicationCrypto
-import uk.gov.hmrc.pizzatax.journeys.{PizzaTaxJourneyModel, PizzaTaxJourneyModelFormats}
+import uk.gov.hmrc.pizzatax.journeys.{PizzaTaxJourneyModelAlt1, PizzaTaxJourneyModelAlt1Formats}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.fsm.PersistentJourneyService
 import uk.gov.hmrc.pizzatax.config.AppConfig
 import uk.gov.hmrc.pizzatax.repository.CacheRepository
 import akka.actor.ActorSystem
 
-trait PizzaTaxJourneyService[RequestContext] extends PersistentJourneyService[RequestContext] {
+trait PizzaTaxJourneyAlt1Service[RequestContext] extends PersistentJourneyService[RequestContext] {
 
-  val journeyKey = "PizzaTaxJourney"
+  val journeyKey = "PizzaTaxJourneyAlt1"
 
-  override val model = PizzaTaxJourneyModel
+  override val model = PizzaTaxJourneyModelAlt1
 
   // do not keep errors or transient states in the journey history
   override val breadcrumbsRetentionStrategy: Breadcrumbs => Breadcrumbs =
-    _.take(100) // retain last 2 states as a breadcrumbs
+    _.take(10) // retain last 10 states as a breadcrumbs
 }
 
-trait PizzaTaxJourneyServiceWithHeaderCarrier extends PizzaTaxJourneyService[HeaderCarrier]
+trait PizzaTaxJourneyServiceAlt1WithHeaderCarrier extends PizzaTaxJourneyAlt1Service[HeaderCarrier]
 
 @Singleton
-case class MongoDBCachedPizzaTaxJourneyService @Inject() (
+case class MongoDBCachedPizzaTaxJourneyAlt1Service @Inject() (
   cacheRepository: CacheRepository,
   applicationCrypto: ApplicationCrypto,
   appConfig: AppConfig,
   actorSystem: ActorSystem
-) extends MongoDBCachedJourneyService[HeaderCarrier] with PizzaTaxJourneyServiceWithHeaderCarrier {
+) extends MongoDBCachedJourneyService[HeaderCarrier] with PizzaTaxJourneyServiceAlt1WithHeaderCarrier {
 
   override val stateFormats: Format[model.State] =
-    PizzaTaxJourneyModelFormats.formats
+    PizzaTaxJourneyModelAlt1Formats.formats
 
   override def getJourneyId(hc: HeaderCarrier): Option[String] =
     hc.extraHeaders.find(_._1 == journeyKey).map(_._2)

@@ -12,9 +12,18 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 
 ## Step 04 - Add state persistence layer
 
-In this step we add and configure components required to persist the state in MongoDB.
+In this step we add and test components required to persist the journey state in MongoDB.
 
 ### Things to learn:
+
+- Each journey model needs a concrete `JourneyService` instance to be useful to the final application,
+- in a web application like our frontend the state has to be persisted between HTTP requests so we use specialized `PersistentJourneyService` interface,
+- how to persist the state is not a concern of `play-fsm` itself, each application have to decide what would work best,
+- in our service we build state persistence mechanism based on the `CacheRepository` interface from the `hmrc-mongo` library,
+- since our serialization is JSON-based we have to define `Format[State]` typeclass instance, this is where` JsonStateFormats[State]` helps,
+- a generic trait `JourneyCache` is responsible for orchestrating all cache read-write operations in a locally sequential manner for each unique `journeyId` key,
+- an abstract `MongoDBCachedJourneyService` class binds `PersistentJourneyService` together with `JourneyCache` and adds encrypted serialization capability to the mix,
+- finally, we end with two concrete classes `MongoDBCachedPizzaTaxJourneyService` and `MongoDBCachedPizzaTaxJourneyAlt1Service`, one for each journey model.
 
 ## Project content after changes
 
@@ -31,7 +40,8 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │                   ├── journeys
     │                   │   ├── PizzaTaxJourneyModel.scala
     │                   │   ├── PizzaTaxJourneyModelAlt1.scala
-    │                   │   └── (+) PizzaTaxJourneyStateFormats.scala
+    │                   │   ├── (+) PizzaTaxJourneyModelAlt1Formats.scala
+    │                   │   └── (+) PizzaTaxJourneyModelFormats.scala
     │                   ├── models
     │                   │   ├── BasicPizzaAllowanceLimits.scala
     │                   │   ├── CanValidate.scala
@@ -66,6 +76,7 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │               └── pizzatax
     │                   ├── services
     │                   │   ├── (+) MongoDBCachedJourneyServiceISpec.scala
+    │                   │   ├── (+) MongoDBCachedPizzaTaxJourneyAlt1ServiceSpec.scala
     │                   │   └── (+) MongoDBCachedPizzaTaxJourneyServiceSpec.scala
     │                   └── support
     │                       ├── (+) AppISpec.scala
@@ -75,7 +86,7 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │                       ├── (+) UnitSpec.scala
     │                       └── (+) WireMockSupport.scala
     ├── project
-    │   ├── build.properties
+    │   ├── build.properties    
     │   └── plugins.sbt
     ├── test
     │   └── uk
@@ -84,8 +95,9 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │               └── pizzatax
     │                   ├── journeys
     │                   │   ├── PizzaTaxJourneyModelAlt1Spec.scala
+    │                   │   ├── (+) PizzaTaxJourneyModelAlt1FormatsSpec.scala
     │                   │   ├── PizzaTaxJourneyModelSpec.scala
-    │                   │   └── PizzaTaxJourneyStateFormatsSpec.scala
+    │                   │   └── (+) PizzaTaxJourneyModelFormatsSpec.scala
     │                   ├── support
     │                   │   ├── DummyContext.scala
     │                   │   ├── InMemoryStore.scala
