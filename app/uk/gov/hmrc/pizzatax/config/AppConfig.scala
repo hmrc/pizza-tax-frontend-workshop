@@ -14,14 +14,26 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.models
+package uk.gov.hmrc.pizzatax.config
 
-import play.api.libs.json.Json
+import com.google.inject.ImplementedBy
+import javax.inject.Inject
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import scala.concurrent.duration.Duration
 
-final case class PizzaOrdersDeclaration(
-  totalNumberOfPizzas: Int
-)
+@ImplementedBy(classOf[AppConfigImpl])
+trait AppConfig {
 
-object PizzaOrdersDeclaration {
-  implicit val format = Json.format[PizzaOrdersDeclaration]
+  val mongoSessionExpiration: Duration
+  val traceFSM: Boolean
+}
+
+class AppConfigImpl @Inject() (config: ServicesConfig) extends AppConfig {
+
+  override val mongoSessionExpiration: Duration =
+    config.getDuration("mongodb.session.expiration")
+
+  override val traceFSM: Boolean =
+    config.getBoolean("trace.fsm")
+
 }

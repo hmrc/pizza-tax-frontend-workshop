@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.pizzatax.models
 
+import uk.gov.hmrc.pizzatax.utils.EnumerationFormats
+
 sealed trait HungerSolution
 
-object HungerSolution {
+object HungerSolution extends EnumerationFormats[HungerSolution] {
 
   case object GetAngry extends HungerSolution
   case object Daydream extends HungerSolution

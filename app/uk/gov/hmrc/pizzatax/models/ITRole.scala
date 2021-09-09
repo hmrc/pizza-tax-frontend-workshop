@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.pizzatax.models
 
+import uk.gov.hmrc.pizzatax.utils.EnumerationFormats
+
 sealed trait ITRole
 
-object ITRole {
+object ITRole extends EnumerationFormats[ITRole] {
 
   case object Manager extends ITRole
   case object Architect extends ITRole

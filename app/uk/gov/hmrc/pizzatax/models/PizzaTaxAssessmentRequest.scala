@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.pizzatax.models
 
+import play.api.libs.json.Json
+
 final case class PizzaTaxAssessmentRequest(
   pizzaOrders: PizzaOrdersDeclaration,
   pizzaAllowance: PizzaAllowance,
@@ -23,6 +25,8 @@ final case class PizzaTaxAssessmentRequest(
 )
 
 object PizzaTaxAssessmentRequest {
+
+  implicit val format = Json.format[PizzaTaxAssessmentRequest]
 
   object create {
     def unapply(q: QuestionnaireAnswers): Option[PizzaTaxAssessmentRequest] =

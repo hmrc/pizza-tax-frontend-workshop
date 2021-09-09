@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.pizzatax.models
 
+import uk.gov.hmrc.pizzatax.utils.EnumerationFormats
+
 sealed trait PizzaAllowance
 
-object PizzaAllowance {
+object PizzaAllowance extends EnumerationFormats[PizzaAllowance] {
 
   case object Basic extends PizzaAllowance
   case object ITWorker extends PizzaAllowance

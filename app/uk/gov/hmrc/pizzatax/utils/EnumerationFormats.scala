@@ -1,0 +1,85 @@
+/*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.pizzatax.utils
+
+import play.api.libs.json._
+
+/**
+  * Helper trait providing JSON formatter based on the set of enum values.
+  * Designed to be mixed in the companion object of the enum type and as typeclass.
+  * @tparam A enum type
+  */
+trait EnumerationFormats[A] {
+
+  import EnumerationFormats._
+
+  /** Set of enum values recognized by the formatter. */
+  val values: Set[A]
+
+  private lazy val valuesMap: Map[String, A] =
+    values.map(value => (identityOf(value), value)).toMap
+
+  lazy val keys: Set[String] = values.map(value => identityOf(value))
+
+  /** Checks if given string is a valid enum key. */
+  lazy val isValidKey: String => Boolean = keys.contains
+
+  /** Optionally returns string key for a given enum value, if recognized or None */
+  def keyOf(value: A): Option[String] =
+    Option(identityOf(value))
+      .filter(isValidKey)
+
+  /** Optionally returns enum for a given key, if exists or None */
+  def valueOf(key: String): Option[A] = valuesMap.get(key)
+
+  implicit val format: Format[A] = Format(
+    Reads {
+      case JsString(key) =>
+        valueOf(key)
+          .map(JsSuccess.apply(_))
+          .getOrElse(JsError(s"Unsupported enum key $key, should be one of ${keys.mkString(",")}"))
+
+      case json => JsError(s"Expected json string but got ${json.getClass.getSimpleName}")
+    },
+    Writes.apply(value =>
+      keyOf(value)
+        .map(JsString.apply)
+        .getOrElse(
+          throw new IllegalStateException(
+            s"Unsupported enum value $value, should be one of ${values.mkString(",")}"
+          )
+        )
+    )
+  )
+
+  /** Instance of a typeclass declaration */
+  implicit val enumerationFormats: EnumerationFormats[A] = this
+
+}
+
+object EnumerationFormats {
+
+  def identityOf[A](entity: A): String = {
+    val name = entity.getClass.toString
+    val name1 = if (name.endsWith("$") || name.endsWith(".")) name.dropRight(1) else name
+    val name2 = {
+      val i = Math.max(name1.lastIndexOf("."), name1.lastIndexOf("$")) + 1
+      name1.substring(i)
+    }
+    name2
+  }
+}

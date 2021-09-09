@@ -16,4 +16,10 @@
 
 package uk.gov.hmrc.pizzatax.models
 
+import play.api.libs.json.Json
+
 final case class PizzaTaxAssessmentResponse(confirmationId: String, amountOfTaxDue: Int)
+
+object PizzaTaxAssessmentResponse {
+  implicit val format = Json.format[PizzaTaxAssessmentResponse]
+}

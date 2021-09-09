@@ -7,58 +7,14 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 - 00 [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
 - 02 [further elaborate the model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)
-- **03 [alternative model designs](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-03-alternative-model-design#readme)**
+- 03 [explore alternative model designs](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-03-alternative-model-design#readme)
+- **04 [add state persistence layer](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-04-configure-state-persistence-layer#readme)**
 
-## Step 03 - Explore alternative designs of the journey model
+## Step 04 - Add state persistence layer
 
-In this step we have a look at the alternative design of the journey model `PizzaTaxJourneyModelAlt1`, where all the answers are explictly remembered in the dedicated record `QuestionnaireAnswers`. This is to allow outer layers (controller) to populate input fields when travelling back and forth the journey. 
-
-                        ┌─────────┐
-                        │  Start  │
-                        └────┬────┘
-                             │
-                             ▼
-                 HaveYouBeenHungryRecently
-                             │
-                  ┌────no────┴────yes───┐
-                  │                     ▼
-                  │              WhatYouDidToAddressHunger
-                  │                     │
-                  │ ┌──other────────────┴───┐
-                  │ │                       │
-                  ▼ ▼                 HungerSolution
-        DidYouOrderPizzaAnyway        == OrderPizza
-                  │                         │
-                  ├───yes─────────────────┐ │
-                  │                       ▼ ▼
-                  │              HowManyPizzasDidYouOrder
-                  │                         │
-                  no                ┌───L───┴───H────┐
-                  │                 │                ▼
-                  │                 │    AreYouEligibleForSpecialAllowance
-                  │                 │                │
-                  │                 │      ┌──other──┴─ITWorker──┐
-                  │                 │      │                     ▼
-                  │                 │      │              WhatIsYourITRole
-                  │                 │      │                     │
-                  │                 │      │      ┌──────────────┘
-                  │                 │      │      │
-                  │                 ▼      ▼      ▼
-                  │              QuestionnaireSummary
-                  │                        │               ┌─────────────┐
-                  │                        ├──calculate───►│ Backend API │
-                  │                        │               └─────────────┘
-    ┌─────────────▼────────┐    ┌──────────▼─────────────┐
-    │NotEligibleForPizzaTax│    │TaxStatementConfirmation│
-    └──────────────────────┘    └────────────────────────┘
-
-We use helper trait `HasAnswers` to mark states holding `answers` property. 
-
-To help keep questionnaire entity always valid we implement `isValid` method and instead of `goto` we use  `gotoIfValid` helper method to progress to the new state.
+In this step we add and configure components required to persist the state in MongoDB.
 
 ### Things to learn:
-
-- The journey should keep enough information to support target application flow, nothing more, nothing less.
 
 ## Project content after changes
 
@@ -70,21 +26,54 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │       └── gov
     │           └── hmrc
     │               └── pizzatax
+    │                   ├── config
+    │                   │   └── (+) AppConfig.scala
     │                   ├── journeys
-    │                   │   ├── (*) PizzaTaxJourneyModel.scala
-    │                   │   └── (+) PizzaTaxJourneyModelAlt1.scala
+    │                   │   ├── PizzaTaxJourneyModel.scala
+    │                   │   ├── PizzaTaxJourneyModelAlt1.scala
+    │                   │   └── (+) PizzaTaxJourneyStateFormats.scala
     │                   ├── models
     │                   │   ├── BasicPizzaAllowanceLimits.scala
-    │                   │   ├── (+) CanValidate.scala
+    │                   │   ├── CanValidate.scala
     │                   │   ├── HungerSolution.scala
     │                   │   ├── ITRole.scala
     │                   │   ├── PizzaAllowance.scala
     │                   │   ├── PizzaOrdersDeclaration.scala
     │                   │   ├── PizzaTaxAssessmentRequest.scala
     │                   │   ├── PizzaTaxAssessmentResponse.scala
-    │                   │   └── (+) QuestionnaireAnswers.scala
-    │                   └── utils
-    │                       └── (+) OptionOps.scala
+    │                   │   └── QuestionnaireAnswers.scala
+    │                   ├── repository
+    │                   │   ├── (+) CacheRepository.scala
+    │                   │   └── (+) JourneyCacheRepository.scala
+    │                   ├── services
+    │                   │   ├── (+) JourneyCache.scala
+    │                   │   ├── (+) MongoDBCachedJourneyService.scala
+    │                   │   └── (+) PizzaTaxJourneyService.scala
+    │                   ├── utils
+    │                   │   ├── EnumerationFormats.scala
+    │                   │   └── OptionOps.scala
+    │                   └── (+) FrontendModule.scala
+    ├── conf
+    │   ├── (+) app.routes
+    │   ├── (+) application-json-logger.xml
+    │   ├── (+) application.conf
+    │   ├── (+) logback.xml
+    │   └── (+) prod.routes
+    ├── it
+    │   └── uk
+    │       └── gov
+    │           └── hmrc
+    │               └── pizzatax
+    │                   ├── services
+    │                   │   ├── (+) MongoDBCachedJourneyServiceISpec.scala
+    │                   │   └── (+) MongoDBCachedPizzaTaxJourneyServiceSpec.scala
+    │                   └── support
+    │                       ├── (+) AppISpec.scala
+    │                       ├── (+) BaseISpec.scala
+    │                       ├── (+) Port.scala
+    │                       ├── (+) TestAppConfig.scala
+    │                       ├── (+) UnitSpec.scala
+    │                       └── (+) WireMockSupport.scala
     ├── project
     │   ├── build.properties
     │   └── plugins.sbt
@@ -94,15 +83,18 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │           └── hmrc
     │               └── pizzatax
     │                   ├── journeys
-    │                   │   ├── (+) PizzaTaxJourneyModelAlt1Spec.scala
-    │                   │   └── (*) PizzaTaxJourneyModelSpec.scala
+    │                   │   ├── PizzaTaxJourneyModelAlt1Spec.scala
+    │                   │   ├── PizzaTaxJourneyModelSpec.scala
+    │                   │   └── PizzaTaxJourneyStateFormatsSpec.scala
     │                   ├── support
     │                   │   ├── DummyContext.scala
     │                   │   ├── InMemoryStore.scala
     │                   │   ├── JourneyModelSpec.scala
+    │                   │   ├── JsonFormatTest.scala
     │                   │   └── TestJourneyService.scala
     │                   └── utils
-    │                       └── (+) OptionOpsSpec.scala
+    │                       ├── EnumerationFormatsSpec.scala
+    │                       └── OptionOpsSpec.scala
     ├── LICENSE
     ├── README.md
     ├── build.sbt
