@@ -19,8 +19,9 @@ In this step we start getting a feeling of a final application by adding control
 
 - Each journey model has a dedicated controller, in our case it is `PizzaTaxJourneyController` extending `BaseJourneyController` and `JourneyController`,
 - an abstract `JourneyController` provides **Actions DSL** to simplify wiring actions with the FSM model,
-- our controller needs to know how to display a state, we need to implement `renderState` method
-- also our controller needs to know what application route represents what state, hence we have to implement `getCallFor` method.
+- most action definitions will be one-liners,
+- our controller needs to know how to display a state, we need to implement `renderState` method,
+- our controller also needs to know which application route represents what state, hence we have to implement `getCallFor` method.
 
 
 ## Project content after changes
