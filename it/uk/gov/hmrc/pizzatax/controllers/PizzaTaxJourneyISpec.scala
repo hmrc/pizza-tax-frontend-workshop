@@ -17,32 +17,65 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class PizzaTaxJourneyISpec extends PizzaTaxJourneyISpecSetup {
 
-  import journey.model.State._
+  import journey.model._
+
+  implicit val journeyId: JourneyId = JourneyId()
 
   "PizzaTaxJourneyController" when {
     "GET /" should {
       "show the start page" in {
-        implicit val journeyId: JourneyId = JourneyId()
-        journey.setState(Start)
+        journey.setState(State.Start)
         givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
-
         val result = await(request("/").get())
+        journey.getState shouldBe State.HaveYouBeenHungryRecently
+        result.status shouldBe 200
+        result.body should include(htmlEscapedPageTitle("view.haveYouBeenHungryRecently.title"))
+      }
+    }
 
+    "GET /have-you-been-hungry-recently" should {
+      "show [Have you been hungry recently?] page" in {
+        journey.setState(State.HaveYouBeenHungryRecently)
+        givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
+        val result = await(request("/have-you-been-hungry-recently").get())
+        journey.getState shouldBe State.HaveYouBeenHungryRecently
+        result.status shouldBe 200
+        result.body should include(htmlEscapedPageTitle("view.haveYouBeenHungryRecently.title"))
+      }
+    }
+
+    "POST /have-you-been-hungry-recently" should {
+      "if selected YES then show [What you did to address the hunger?]" in {
+        journey.setState(State.HaveYouBeenHungryRecently)
+        givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
+        val result = await(
+          request("/have-you-been-hungry-recently")
+            .post(Map("haveYouBeenHungryRecently" -> "yes"))
+        )
+        journey.getState shouldBe State.WhatYouDidToAddressHunger
+        result.status shouldBe 200
+        result.body should include(htmlEscapedPageTitle("view.whatYouDidToAddressHunger.title"))
+      }
+
+      "if selected NO then show [???]" in {
+        journey.setState(State.HaveYouBeenHungryRecently)
+        givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
+        val result = await(
+          request("/have-you-been-hungry-recently")
+            .post(Map("haveYouBeenHungryRecently" -> "no"))
+        )
+        journey.getState shouldBe State.DidYouOrderPizzaAnyway
         result.status shouldBe 501
-        journey.getState shouldBe Start
       }
     }
 
     "GET /work-in-progress" should {
       "show the NotImplemented error" in {
-        implicit val journeyId: JourneyId = JourneyId()
-        journey.setState(Start)
+        journey.setState(State.Start)
         givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
-
         val result = await(request("/work-in-progress").get())
-
         result.status shouldBe 501
-        journey.getState shouldBe Start
+        journey.getState shouldBe State.Start
       }
     }
   }
