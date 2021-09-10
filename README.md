@@ -13,7 +13,7 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 
 ## Step 05 - Start building a controller and views
 
-In this step we start getting a feeling of a final application by building a controller and views.
+In this step we start getting a feeling of a final application by adding controller and views.
 
 ### Things to learn:
 
