@@ -1,0 +1,21 @@
+
+service.name = Pizza Tax Assessment
+site.back = Back
+
+view.haveYouBeenHungryRecently.title=Have you been hungry recently
+view.haveYouBeenHungryRecently.heading=Have you been hungry recently?
+
+form.haveYouBeenHungryRecently.yes=Yes
+form.haveYouBeenHungryRecently.no=No
+
+view.whatYouDidToAddressHunger.title=What you did to address the hunger
+view.whatYouDidToAddressHunger.heading=What you did to address the hunger?
+
+form.whatYouDidToAddressHunger.BurnToasts=Burn some toast
+form.whatYouDidToAddressHunger.Daydream=Kept daydreaming
+form.whatYouDidToAddressHunger.EatOut=Ate out in the pub
+form.whatYouDidToAddressHunger.GetAngry=Got very angry
+form.whatYouDidToAddressHunger.OrderPizza=Ordered a pizza
+form.whatYouDidToAddressHunger.RansackFridge=Ransack the fridge
+
+form.continue=Continue

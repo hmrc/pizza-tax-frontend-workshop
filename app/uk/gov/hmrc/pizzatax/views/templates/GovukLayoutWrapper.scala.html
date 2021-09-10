@@ -1,0 +1,108 @@
+@*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.pizzatax.config.AppConfig
+@import uk.gov.hmrc.pizzatax.controllers.routes
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcReportTechnicalIssueHelper
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcTrackingConsentSnippet
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcStandardHeader
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcStandardFooter
+@import views.html.helper.CSPNonce
+@import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
+@import uk.gov.hmrc.pizzatax.controllers.routes.SignOutController
+@import uk.gov.hmrc.pizzatax.controllers.routes.PizzaTaxJourneyController
+@import uk.gov.hmrc.hmrcfrontend.views.Aliases.UserResearchBanner
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+govukLayout: GovukLayout,
+govukBackLink: GovukBackLink,
+appConfig: AppConfig,
+hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
+hmrcTrackingConsentSnippet: HmrcTrackingConsentSnippet,
+hmrcStandardHeader: HmrcStandardHeader,
+hmrcStandardFooter: HmrcStandardFooter,
+standardBetaBanner:StandardBetaBanner,
+languageSelection: uk.gov.hmrc.pizzatax.views.html.components.languageSelection
+)
+
+@(pageTitle: Option[String] = None, timeout: Boolean = true, js: Option[Html] = None, backLink: Option[String] =
+None, refresh: Int = 0)(contentBlock: Html)(implicit request: Request[_], messages: Messages)
+
+@head = {
+@hmrcTrackingConsentSnippet(nonce = CSPNonce.get)
+<meta name="format-detection" content="telephone=no">
+<!--[if lte IE 8]><link href='@controllers.routes.Assets.versioned("stylesheets/application-ie-8.css")' rel="stylesheet" type="text/css" /><![endif]-->
+<!--[if gt IE 8]><!-->
+<link href='@controllers.routes.Assets.versioned("stylesheets/application.css")' media="screen" rel="stylesheet"
+    type="text/css" />
+<!--<![endif]-->
+<link rel="stylesheet" href='@controllers.routes.Assets.versioned("stylesheets/print.css")' type="text/css"
+    media="print" />
+@if(refresh>0){
+<noscript>
+ <meta http-equiv="refresh" content="@refresh"/>
+</noscript>
+}
+
+@if(timeout) {
+  <meta name="hmrc-timeout-dialog" content="hmrc-timeout-dialog"
+  data-language="en"
+  data-timeout="@appConfig.timeout"
+  data-countdown="@appConfig.countdown"
+  data-keep-alive-url="@routes.SessionController.keepAlive"
+  data-sign-out-url="@{appConfig.baseExternalCallbackUrl + routes.SignOutController.signOutTimeout.url}"/>
+}
+}
+
+@scripts = {
+  <script src='@controllers.routes.Assets.versioned("javascripts/application.min.js")'></script>
+}
+
+@beforeContentBlock = {
+  @languageSelection(
+    appConfig.languageMap,
+    uk.gov.hmrc.pizzatax.controllers.routes.LanguageSwitchController.switchToLanguage(_)
+  )
+  @if(backLink.isDefined) {
+    @govukBackLink(BackLink(href = backLink.get, content = Text(messages("site.back")), attributes = Map("id" -> "back-link")))
+  }
+}
+
+@content = {
+  <div class="govuk-!-margin-bottom-6">
+    @contentBlock
+  </div>
+
+  <div class="report-a-problem">
+    @hmrcReportTechnicalIssueHelper()
+  </div>
+}
+
+@govukLayout(
+    pageTitle = pageTitle.map(title => s"$title - ${messages("site.serviceName")} - ${messages("site.govuk")}" ), headBlock = Some(head),
+beforeContentBlock = Some(beforeContentBlock),
+bodyEndBlock = None,
+scriptsBlock = Some(scripts),
+headerBlock = Some(hmrcStandardHeader(
+  serviceUrl = Some(PizzaTaxJourneyController.showStart.url),
+  signOutUrl = if(timeout) Some(SignOutController.signOut().url) else None,
+  phaseBanner = Some(standardBetaBanner(url = appConfig.betaFeedbackUrl)),
+  userResearchBanner = Some(UserResearchBanner(url = appConfig.researchBannerUrl)),
+  displayHmrcBanner = false
+)),
+footerBlock = Some(hmrcStandardFooter(accessibilityStatementUrl = None))
+)(content)

@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package uk.gov.hmrc.pizzatax.views
+@this()
 
-import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.pizzatax.views.html._
+@(
+        link: String,
+        messageKey: String,
+        useButtonStyle: Boolean = false,
+        id: Option[String] = None,
+        isExternal: Boolean = false
+)(implicit messages: Messages)
 
-@Singleton
-class Views @Inject() (
-  val haveYouBeenHungryRecentlyView: HaveYouBeenHungryRecentlyView,
-  val whatYouDidToAddressHungerView: WhatYouDidToAddressHungerView
-)
+@classes = @{
+ if (useButtonStyle) "govuk-button" else "govuk-link"
+}
+
+<a href="@link" class="@classes" @id.map(x => s"id=$x") @if(isExternal) { target="_blank" } @if(useButtonStyle) { role="button" data-module="govuk-button" }>
+ @messages(messageKey)@if(isExternal)(" " + messages("site.opensInNewWindowOrTab"))
+</a>

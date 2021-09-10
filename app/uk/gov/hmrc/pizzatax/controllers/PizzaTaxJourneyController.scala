@@ -26,6 +26,7 @@ import uk.gov.hmrc.pizzatax.services.PizzaTaxJourneyServiceWithHeaderCarrier
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import uk.gov.hmrc.pizzatax.models.HungerSolution
 
 @Singleton
 class PizzaTaxJourneyController @Inject() (
@@ -47,13 +48,24 @@ class PizzaTaxJourneyController @Inject() (
 
   final val controller = routes.PizzaTaxJourneyController
 
-  import journeyService.model.{State, Transition}
-  import journeyService.model.State._
+  import journeyService.model._
+  import PizzaTaxJourneyController._
 
   // YOUR ACTIONS
 
   final val showStart: Action[AnyContent] =
-    actions.show[Start.type]
+    actions.apply(Transitions.start)
+
+  final val showHaveYouBeenHungryRecently: Action[AnyContent] =
+    actions.show[State.HaveYouBeenHungryRecently.type]
+
+  final val submittedHaveYouBeenHungryRecently: Action[AnyContent] =
+    actions
+      .bindForm(Forms.haveYouBeenHungryRecentlyForm)
+      .apply(Transitions.submittedHaveYouBeenHungryRecently)
+
+  final val showWhatYouDidToAddressHunger: Action[AnyContent] =
+    actions.show[State.WhatYouDidToAddressHunger.type]
 
   /**
     * Function from the `State` to the `Call` (route),
@@ -61,9 +73,13 @@ class PizzaTaxJourneyController @Inject() (
     */
   final override def getCallFor(state: State)(implicit request: Request[_]): Call =
     state match {
-      case Start => controller.showStart
-      case _     => controller.showWorkInProgress
+      case State.Start                     => controller.showStart
+      case State.HaveYouBeenHungryRecently => controller.showHaveYouBeenHungryRecently
+      case State.WhatYouDidToAddressHunger => controller.showWhatYouDidToAddressHunger
+      case _                               => controller.showWorkInProgress
     }
+
+  import uk.gov.hmrc.play.fsm.OptionalFormOps._
 
   /**
     * Function from the `State` to the `Result`,
@@ -73,9 +89,46 @@ class PizzaTaxJourneyController @Inject() (
     request: Request[_]
   ): Result =
     state match {
-      case Start => Redirect(controller.showWorkInProgress)
-      case _     => NotImplemented
+      case State.Start => Redirect(controller.showHaveYouBeenHungryRecently)
+      case State.HaveYouBeenHungryRecently =>
+        Ok(
+          views.haveYouBeenHungryRecentlyView(
+            formWithErrors.or(Forms.haveYouBeenHungryRecentlyForm),
+            controller.submittedHaveYouBeenHungryRecently,
+            None
+          )
+        )
+      case State.WhatYouDidToAddressHunger =>
+        Ok(
+          views.whatYouDidToAddressHungerView(
+            formWithErrors.or(Forms.whatYouDidToAddressHunger),
+            controller.showWorkInProgress,
+            Some(backLinkFor(breadcrumbs))
+          )
+        )
+      case _ => NotImplemented
     }
 }
 
-object PizzaTaxJourneyController {}
+object PizzaTaxJourneyController {
+
+  object Forms {
+
+    import play.api.data.Form
+    import play.api.data.Forms._
+    import uk.gov.hmrc.pizzatax.controllers.FormFieldMappings._
+
+    val haveYouBeenHungryRecentlyForm = Form[Boolean](
+      mapping("haveYouBeenHungryRecently" -> booleanMapping("haveYouBeenHungryRecently", "yes", "no"))(identity)(
+        Option.apply
+      )
+    )
+
+    val whatYouDidToAddressHunger = Form[HungerSolution](
+      mapping("whatYouDidToAddressHunger" -> enumMapping[HungerSolution]("whatYouDidToAddressHunger"))(identity)(
+        Option.apply
+      )
+    )
+  }
+
+}

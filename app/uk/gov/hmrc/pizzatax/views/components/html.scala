@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.views
+package uk.gov.hmrc.pizzatax.views.components
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.pizzatax.views.html._
 
 @Singleton
-class Views @Inject() (
-  val haveYouBeenHungryRecentlyView: HaveYouBeenHungryRecentlyView,
-  val whatYouDidToAddressHungerView: WhatYouDidToAddressHungerView
+class html @Inject() (
+  val h1: uk.gov.hmrc.pizzatax.views.html.components.h1,
+  val p: uk.gov.hmrc.pizzatax.views.html.components.p,
+  val a: uk.gov.hmrc.pizzatax.views.html.components.link,
+  val ul: uk.gov.hmrc.pizzatax.views.html.components.bullets,
+  val button: uk.gov.hmrc.pizzatax.views.html.components.button
 )
