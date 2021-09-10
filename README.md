@@ -8,22 +8,15 @@ An imaginary pizza tax service demonstrating step-by-step how to build a fronten
 - 01 [create an initial journey model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-01-create-a-journey#readme)
 - 02 [further elaborate the model](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-02-extend-journey-model#readme)
 - 03 [explore alternative model designs](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-03-alternative-model-design#readme)
-- **04 [add state persistence layer](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-04-configure-state-persistence-layer#readme)**
+- 04 [add state persistence layer](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-04-configure-state-persistence-layer#readme)
+- **05 [start building a controller and views](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/step-05-start-building-a-controller-and-views#readme)**
 
-## Step 04 - Add state persistence layer
+## Step 05 - Start building a controller and views
 
-In this step we add and test components required to persist the journey state in MongoDB.
+In this step we start getting a feeling of a final application by building a controller and views.
 
 ### Things to learn:
 
-- Each journey model needs a concrete `JourneyService` instance to be useful to the final application,
-- in a web application like our frontend the state has to be persisted between HTTP requests so we use specialized `PersistentJourneyService` interface,
-- how to persist the state is not a concern of `play-fsm` itself, each application has to decide what would work best,
-- in our service we build state persistence mechanism based on the `CacheRepository` interface from the `hmrc-mongo` library,
-- since our serialization is JSON-based we have to define `Format[State]` typeclass instance, this is where` JsonStateFormats[State]` helps,
-- a generic trait `JourneyCache` is responsible for orchestrating all cache read-write operations in a locally sequential manner for each unique `journeyId` key,
-- an abstract `MongoDBCachedJourneyService` class binds `PersistentJourneyService` together with `JourneyCache` and adds encrypted serialization capability to the mix,
-- finally, we end with two concrete classes `MongoDBCachedPizzaTaxJourneyService` and `MongoDBCachedPizzaTaxJourneyAlt1Service`, one for each journey model.
 
 ## Project content after changes
 
@@ -36,12 +29,18 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │           └── hmrc
     │               └── pizzatax
     │                   ├── config
-    │                   │   └── (+) AppConfig.scala
+    │                   │   └── (*) AppConfig.scala
+    │                   ├── connectors
+    │                   │   └── (+) FrontendAuthConnector.scala
+    │                   ├── controllers
+    │                   │   ├── (+) AuthActions.scala
+    │                   │   ├── (+) BaseJourneyController.scala
+    │                   │   └── (+) PizzaTaxJourneyController.scala
     │                   ├── journeys
     │                   │   ├── PizzaTaxJourneyModel.scala
     │                   │   ├── PizzaTaxJourneyModelAlt1.scala
-    │                   │   ├── (+) PizzaTaxJourneyModelAlt1Formats.scala
-    │                   │   └── (+) PizzaTaxJourneyModelFormats.scala
+    │                   │   ├── PizzaTaxJourneyModelAlt1Formats.scala
+    │                   │   └── PizzaTaxJourneyModelFormats.scala
     │                   ├── models
     │                   │   ├── BasicPizzaAllowanceLimits.scala
     │                   │   ├── CanValidate.scala
@@ -53,40 +52,53 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │                   │   ├── PizzaTaxAssessmentResponse.scala
     │                   │   └── QuestionnaireAnswers.scala
     │                   ├── repository
-    │                   │   ├── (+) CacheRepository.scala
-    │                   │   └── (+) JourneyCacheRepository.scala
+    │                   │   ├── CacheRepository.scala
+    │                   │   └── JourneyCacheRepository.scala
     │                   ├── services
-    │                   │   ├── (+) JourneyCache.scala
-    │                   │   ├── (+) MongoDBCachedJourneyService.scala
-    │                   │   └── (+) PizzaTaxJourneyService.scala
+    │                   │   ├── JourneyCache.scala
+    │                   │   ├── MongoDBCachedJourneyService.scala
+    │                   │   ├── PizzaTaxJourneyAlt1Service.scala
+    │                   │   └── PizzaTaxJourneyService.scala
     │                   ├── utils
+    │                   │   ├── (+) CallOps.scala
     │                   │   ├── EnumerationFormats.scala
     │                   │   └── OptionOps.scala
-    │                   └── (+) FrontendModule.scala
+    │                   ├── views
+    │                   │   └── (+) Views.scala
+    │                   └── FrontendModule.scala
     ├── conf
-    │   ├── (+) app.routes
-    │   ├── (+) application-json-logger.xml
-    │   ├── (+) application.conf
-    │   ├── (+) logback.xml
-    │   └── (+) prod.routes
+    │   ├── app.routes
+    │   ├── application-json-logger.xml
+    │   ├── application.conf
+    │   ├── logback.xml
+    │   └── prod.routes
     ├── it
     │   └── uk
     │       └── gov
     │           └── hmrc
     │               └── pizzatax
+    │                   ├── controllers
+    │                   │   ├── (+) AuthActionsISpec.scala
+    │                   │   └── (+) PizzaTaxJourneyISpec.scala
     │                   ├── services
-    │                   │   ├── (+) MongoDBCachedJourneyServiceISpec.scala
-    │                   │   ├── (+) MongoDBCachedPizzaTaxJourneyAlt1ServiceSpec.scala
-    │                   │   └── (+) MongoDBCachedPizzaTaxJourneyServiceSpec.scala
+    │                   │   ├── MongoDBCachedJourneyServiceISpec.scala
+    │                   │   ├── MongoDBCachedPizzaTaxJourneyAlt1ServiceSpec.scala
+    │                   │   └── MongoDBCachedPizzaTaxJourneyServiceSpec.scala
+    │                   ├── stubs
+    │                   │   ├── (+) AuthStubs.scala
+    │                   │   └── (+) DataStreamStubs.scala
     │                   └── support
-    │                       ├── (+) AppISpec.scala
-    │                       ├── (+) BaseISpec.scala
-    │                       ├── (+) Port.scala
-    │                       ├── (+) TestAppConfig.scala
-    │                       ├── (+) UnitSpec.scala
-    │                       └── (+) WireMockSupport.scala
+    │                       ├── AppISpec.scala
+    │                       ├── BaseISpec.scala
+    │                       ├── (+) MetricsTestSupport.scala
+    │                       ├── Port.scala
+    │                       ├── (+) ServerISpec.scala
+    │                       ├── TestAppConfig.scala
+    │                       ├── (+) TestJourneyService.scala
+    │                       ├── UnitSpec.scala
+    │                       └── WireMockSupport.scala
     ├── project
-    │   ├── build.properties    
+    │   ├── build.properties
     │   └── plugins.sbt
     ├── test
     │   └── uk
@@ -94,10 +106,10 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │           └── hmrc
     │               └── pizzatax
     │                   ├── journeys
+    │                   │   ├── PizzaTaxJourneyModelAlt1FormatsSpec.scala
     │                   │   ├── PizzaTaxJourneyModelAlt1Spec.scala
-    │                   │   ├── (+) PizzaTaxJourneyModelAlt1FormatsSpec.scala
-    │                   │   ├── PizzaTaxJourneyModelSpec.scala
-    │                   │   └── (+) PizzaTaxJourneyModelFormatsSpec.scala
+    │                   │   ├── PizzaTaxJourneyModelFormatsSpec.scala
+    │                   │   └── PizzaTaxJourneyModelSpec.scala
     │                   ├── support
     │                   │   ├── DummyContext.scala
     │                   │   ├── InMemoryStore.scala
@@ -105,6 +117,7 @@ Newly added files are marked with (+) , modified with (*) , removed with (x) .
     │                   │   ├── JsonFormatTest.scala
     │                   │   └── TestJourneyService.scala
     │                   └── utils
+    │                       ├── CallOpsSpec.scala
     │                       ├── EnumerationFormatsSpec.scala
     │                       └── OptionOpsSpec.scala
     ├── LICENSE

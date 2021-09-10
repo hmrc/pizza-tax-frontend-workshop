@@ -24,11 +24,23 @@ import scala.concurrent.duration.Duration
 @ImplementedBy(classOf[AppConfigImpl])
 trait AppConfig {
 
+  val authBaseUrl: String
+  val authorisedServiceName: String
+  val authorisedIdentifierKey: String
   val mongoSessionExpiration: Duration
   val traceFSM: Boolean
 }
 
 class AppConfigImpl @Inject() (config: ServicesConfig) extends AppConfig {
+
+  override val authBaseUrl: String =
+    config.baseUrl("auth")
+
+  override val authorisedServiceName: String =
+    config.getString("authorisedServiceName")
+
+  override val authorisedIdentifierKey: String =
+    config.getString("authorisedIdentifierKey")
 
   override val mongoSessionExpiration: Duration =
     config.getDuration("mongodb.session.expiration")

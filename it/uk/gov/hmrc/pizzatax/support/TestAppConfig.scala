@@ -9,6 +9,9 @@ case class TestAppConfig(
   wireMockPort: Int
 ) extends AppConfig {
 
+  override val authBaseUrl: String = wireMockBaseUrl
+  override val authorisedServiceName: String = "HMRC-XYZ"
+  override val authorisedIdentifierKey: String = "Foo"
   override val mongoSessionExpiration: Duration = 1.hour
   override val traceFSM: Boolean = false
 }

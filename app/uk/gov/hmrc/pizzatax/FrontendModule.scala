@@ -18,20 +18,21 @@ import com.google.inject.AbstractModule
 import play.api.Configuration
 import play.api.Environment
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.pizzatax.connectors.FrontendAuthConnector
 import uk.gov.hmrc.pizzatax.repository.CacheRepository
 import uk.gov.hmrc.pizzatax.repository.JourneyCacheRepository
 import uk.gov.hmrc.pizzatax.services._
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
+import uk.gov.hmrc.auth.core.AuthConnector
 
 class FrontendModule(val environment: Environment, val configuration: Configuration) extends AbstractModule {
 
   override def configure(): Unit = {
 
+    bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[HttpGet]).to(classOf[DefaultHttpClient])
     bind(classOf[HttpPost]).to(classOf[DefaultHttpClient])
-
     bind(classOf[CacheRepository]).to(classOf[JourneyCacheRepository])
-
     bind(classOf[PizzaTaxJourneyServiceWithHeaderCarrier])
       .to(classOf[MongoDBCachedPizzaTaxJourneyService])
   }

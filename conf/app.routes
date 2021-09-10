@@ -3,4 +3,7 @@
 ->         /govuk-frontend                                          govuk.Routes
 ->         /hmrc-frontend                                           hmrcfrontend.Routes 
 
+GET        /                                                        @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.showStart
+GET        /work-in-progress                                        @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.showWorkInProgress
+
 GET        /assets/*file                                            controllers.Assets.versioned(path="/public", file: Asset)

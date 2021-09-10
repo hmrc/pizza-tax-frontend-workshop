@@ -33,11 +33,6 @@ abstract class BaseISpec extends UnitSpec with WireMockSupport {
       )
       .overrides(bind[AppConfig].toInstance(TestAppConfig(wireMockBaseUrlAsString, wireMockPort)))
 
-  // override def commonStubs(): Unit = {
-  //   givenCleanMetricRegistry()
-  //   givenAuditConnector()
-  // }//
-
   final implicit val materializer: Materializer = app.materializer
 
   final def checkHtmlResultWithBodyText(result: Result, expectedSubstring: String): Unit = {
