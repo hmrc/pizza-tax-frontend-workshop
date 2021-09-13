@@ -4,6 +4,8 @@
 
 An imaginary pizza tax service showcasing how to build a frontend microservice using [play-fsm](https://github.com/hmrc/play-fsm).
 
+If you are interested in starting a brand-new microservice you can generate it quickly from [template-play-frontend-fsm.g8](https://github.com/hmrc/template-play-frontend-fsm.g8).
+
 ## Workshop steps
 
 - **00 [start with an empty repository](https://github.com/hmrc/pizza-tax-frontend-workshop/tree/master#readme)**
