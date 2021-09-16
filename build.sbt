@@ -50,7 +50,13 @@ lazy val root = (project in file("."))
     scalafmtOnCompile in Compile := true,
     scalafmtOnCompile in Test := true,
     majorVersion := 0,
-    javaOptions in Compile += "-Djava.locale.providers=CLDR,JRE"
+    javaOptions in Compile += "-Djava.locale.providers=CLDR,JRE",
+    WebpackKeys.outputFileName in WebpackKeys.webpack := "javascripts/application.min.js",
+    WebpackKeys.entries in WebpackKeys.webpack := Seq(
+      "assets:javascripts/index.ts",
+      "webjar:lib/govuk-frontend/govuk/all.js",
+      "webjar:lib/hmrc-frontend/hmrc/all.js"
+    )
   )
   .configs(IntegrationTest)
   .settings(

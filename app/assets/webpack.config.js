@@ -2,14 +2,14 @@ const path = require('path');
 
 module.exports = function (env, argv) {
   return {
-    mode: env.prod ? 'production' : 'development',
+    mode: 'production',
+    optimization: {
+      minimize: true,
+      concatenateModules: true
+    },
     watch: false,
     devtool: 'source-map',
-    entry: [
-      './javascripts/index.ts',
-      env.webjarsDir + '/lib/govuk-frontend/govuk/all.js',
-      env.webjarsDir + '/lib/hmrc-frontend/hmrc/all.js'
-    ],
+    entry: Object.values(env.entry),
     resolve: {
       extensions: ['.js', '.ts']
     },
@@ -38,9 +38,6 @@ module.exports = function (env, argv) {
         }
       ]
     },
-    output: {
-      path: env.outputDir + '/javascripts',
-      filename: 'application.min.js'
-    }
+    output: env.output
   }
 };
