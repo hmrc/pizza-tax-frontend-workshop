@@ -8,6 +8,7 @@ import scala.io.Source
 import scala.sys.process.{Process, ProcessBuilder}
 import java.io.PrintWriter
 import java.nio.file.Paths
+import sbt.internal.util.ManagedLogger
 
 /**
   * Enables running NPM scripts, if a package.json file exists in the `packageJsonDirectory`.
@@ -47,8 +48,25 @@ object SbtNpm extends AutoPlugin {
         packageJsonDirectory := (sourceDirectory in WebKeys.assets).value,
         // this enables 'sbt "npm <args>"' commands
         commands ++= packageJsonDirectory(base => Seq(npmCommand(base))).value,
-        npmInstall := npmProcess("npm install failed")(packageJsonDirectory.value, "install"),
-        npmTest := npmProcess("npm test failed")(packageJsonDirectory.value, "test"),
+        npmInstall := {
+          val logger: ManagedLogger = (streams in Assets).value.log
+          val projectRoot: File = baseDirectory.value
+          val nodeModulesDir = packageJsonDirectory.value / "node_modules"
+          if (nodeModulesDir.exists() && nodeModulesDir.isDirectory()) {
+            logger.info(
+              s"[sbt-npm] Folder ${nodeModulesDir.relativeTo(projectRoot).getOrElse(nodeModulesDir)} already exists."
+            )
+            0
+          } else {
+            logger.info(
+              s"[sbt-npm] Running clean install of node modules in ${nodeModulesDir.relativeTo(projectRoot).getOrElse(nodeModulesDir)}"
+            )
+            npmProcess("npm ci failed")(packageJsonDirectory.value, "ci")
+          }
+        },
+        npmTest := {
+          npmProcess("npm test failed")(packageJsonDirectory.value, "test")
+        },
         npmTest := (npmTest dependsOn npmInstall).value,
         //    (test in Test) := (test in Test).dependsOn(npmTest).value,
         packager.Keys.dist := (packager.Keys.dist dependsOn npmInstall).value

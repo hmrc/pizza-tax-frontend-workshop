@@ -55,7 +55,7 @@ object SbtWebpack extends AutoPlugin {
         WebpackKeys.nodeModulesPath := new File("./node_modules"),
         WebpackKeys.webpack := task
           .dependsOn(Assets / WebKeys.webModules)
-          //.dependsOn(NpmKeys.npmInstall in Assets)
+          .dependsOn(NpmKeys.npmInstall in Assets)
           .value,
         WebpackKeys.webpack / excludeFilter := HiddenFileFilter ||
           new FileFilter {
