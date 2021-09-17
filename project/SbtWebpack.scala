@@ -3,6 +3,7 @@ import java.nio.file.Paths
 
 import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.incremental._
+import com.typesafe.sbt.packager
 import sbt.Keys._
 import sbt._
 import xsbti.{Position, Problem, Severity}
@@ -15,6 +16,8 @@ import scala.io.AnsiColor
 
 /**
   * Runs `webpack` command in assets.
+  * Project's build has to define `entries` and `outputFileName` settings.
+  * Supports `skip` setting.
   */
 object SbtWebpack extends AutoPlugin {
 
@@ -34,7 +37,7 @@ object SbtWebpack extends AutoPlugin {
         "The entry point pseudo-paths. If the path starts with `assets:` it will be resolved in assests source directory, if the path starts with `webjar:` it will be resolved in the webjars/lib target directory."
       )
       val outputFileName =
-        SettingKey[String]("outputFileName", "The name of the webpack output file, default to application.min.js")
+        SettingKey[String]("outputFileName", "The name of the webpack output file.")
     }
   }
 
@@ -46,51 +49,55 @@ object SbtWebpack extends AutoPlugin {
   override def projectSettings: Seq[Setting[_]] =
     inConfig(Assets)(
       Seq(
-        WebpackKeys.binary in WebpackKeys.webpack := (Assets / sourceDirectory).value / "node_modules" / ".bin" / "webpack",
-        WebpackKeys.configFile in WebpackKeys.webpack := (Assets / sourceDirectory).value / "webpack.config.js",
-        WebpackKeys.sourceDirs in WebpackKeys.webpack := Seq((Assets / sourceDirectory).value),
+        WebpackKeys.binary := (Assets / sourceDirectory).value / "node_modules" / ".bin" / "webpack",
+        WebpackKeys.configFile := (Assets / sourceDirectory).value / "webpack.config.js",
+        WebpackKeys.sourceDirs := Seq((Assets / sourceDirectory).value),
         WebpackKeys.nodeModulesPath := new File("./node_modules"),
-        WebpackKeys.webpack in Assets := task
-          .dependsOn(WebKeys.webModules in Assets)
+        WebpackKeys.webpack := task
+          .dependsOn(Assets / WebKeys.webModules)
           //.dependsOn(NpmKeys.npmInstall in Assets)
           .value,
-        // Because sbt-webpack might compile JS and output into the same file.
-        // Therefore, we need to deduplicate the files by choosing the one in the target directory.
-        // Otherwise, the "duplicate mappings" error would occur.
-        excludeFilter in WebpackKeys.webpack := HiddenFileFilter ||
+        WebpackKeys.webpack / excludeFilter := HiddenFileFilter ||
           new FileFilter {
             override def accept(file: File): Boolean = {
               val path = file.getAbsolutePath()
               path.contains("/node_modules/") ||
-              path.contains("/target/") ||
               path.contains("/build/")
             }
           },
-        includeFilter in WebpackKeys.webpack := "*.js" || "*.ts",
-        resourceManaged in WebpackKeys.webpack := webTarget.value / "webpack" / "build",
-        managedResourceDirectories in Assets += (resourceManaged in WebpackKeys.webpack in Assets).value,
-        resourceGenerators in Assets += WebpackKeys.webpack in Assets,
-        deduplicators in Assets += {
-          val targetDir = (resourceManaged in WebpackKeys.webpack in Assets).value
+        WebpackKeys.webpack / includeFilter := "*.js" || "*.ts",
+        WebpackKeys.webpack / resourceManaged := webTarget.value / "webpack" / "build",
+        managedResourceDirectories += (Assets / WebpackKeys.webpack / resourceManaged).value,
+        resourceGenerators += Assets / WebpackKeys.webpack,
+        // Because sbt-webpack might compile JS and output into the same file.
+        // Therefore, we need to deduplicate the files by choosing the one in the target directory.
+        // Otherwise, the "duplicate mappings" error would occur.
+        deduplicators += {
+          val targetDir = (Assets / WebpackKeys.webpack / resourceManaged).value
           val targetDirAbsolutePath = targetDir.getAbsolutePath
 
           { files: Seq[File] => files.find(_.getAbsolutePath.startsWith(targetDirAbsolutePath)) }
-        }
+        },
+        packager.Keys.dist := (packager.Keys.dist dependsOn WebpackKeys.webpack).value
       )
+    ) ++ Seq(
+      Global / WebpackKeys.webpack / sbt.Keys.skip := false
     )
 
-  private[this] def readAndClose(file: File): String = {
-    val s = Source.fromFile(file)
-
-    try s.mkString
-    finally s.close()
-  }
+  final def readAndClose(file: File): String =
+    if (file.exists() && file.canRead()) {
+      val s = Source.fromFile(file)
+      try s.mkString
+      finally s.close()
+    } else ""
 
   lazy val task = Def.task {
 
+    val skip = (WebpackKeys.webpack / sbt.Keys.skip).value
+    val logger: ManagedLogger = (streams in Assets).value.log
     val baseDir: File = (sourceDirectory in Assets).value
     val targetDir: File = (resourceManaged in WebpackKeys.webpack in Assets).value
-    val logger: ManagedLogger = (streams in Assets).value.log
+
     val nodeModulesLocation: File = (WebpackKeys.nodeModulesPath in WebpackKeys.webpack).value
     val webpackSourceDirs: Seq[File] = (WebpackKeys.sourceDirs in WebpackKeys.webpack).value
     val webpackReporter: Reporter = (reporter in Assets).value
@@ -100,12 +107,22 @@ object SbtWebpack extends AutoPlugin {
     val webpackOutputFileName: String = (WebpackKeys.outputFileName in WebpackKeys.webpack).value
     val webpackTargetDir: File = (resourceManaged in WebpackKeys.webpack).value
     val assetsWebJarsLocation: File = (webJarsDirectory in Assets).value
+    val projectRoot: File = baseDirectory.value
 
-    val sources: Seq[File] = webpackSourceDirs
+    val webpackEntryFiles: Set[File] =
+      webpackEntries.map { path =>
+        if (path.startsWith("assets:"))
+          baseDir.toPath.resolve(path.drop(7)).toFile()
+        else if (path.startsWith("webjar:"))
+          assetsWebJarsLocation.toPath.resolve(path.drop(7)).toFile()
+        else projectRoot.toPath().resolve(path).toFile()
+      }.toSet
+
+    val sources: Seq[File] = (webpackSourceDirs
       .flatMap { sourceDir =>
         (sourceDir ** ((includeFilter in WebpackKeys.webpack).value -- (excludeFilter in WebpackKeys.webpack).value)).get
       }
-      .filter(_.isFile)
+      .filter(_.isFile) ++ webpackEntryFiles ++ Seq(webpackConfigFileLocation)).distinct
 
     val globalHash = new String(
       Hash(
@@ -131,18 +148,18 @@ object SbtWebpack extends AutoPlugin {
     val results = incremental.syncIncremental((streams in Assets).value.cacheDirectory / "run", sources) {
       modifiedSources =>
         val startInstant = System.currentTimeMillis
-        val projectRoot = baseDirectory.value
 
-        if (modifiedSources.nonEmpty) {
+        if (!skip && modifiedSources.nonEmpty) {
           logger.info(s"""
                          |[sbt-webpack] Detected ${modifiedSources.size} changed files:
-                         |[sbt-webpack]\t${modifiedSources.map(f => f.relativeTo(baseDir).getOrElse(f).toString()).mkString("\n[sbt-webpack]\t")}
+                         |[sbt-webpack]\t${modifiedSources.map(f => f.relativeTo(projectRoot).getOrElse(f).toString()).mkString("\n[sbt-webpack]\t")}
            """.stripMargin.trim)
 
           val compiler = new Webpack.Compiler(
+            projectRoot,
             webpackBinaryLocation,
             webpackConfigFileLocation,
-            webpackEntries,
+            webpackEntryFiles,
             webpackOutputFileName,
             webpackTargetDir,
             assetsWebJarsLocation,
@@ -214,14 +231,16 @@ object SbtWebpack extends AutoPlugin {
             .sorted
             .foreach { s =>
               logger.info(
-                s"[sbt-webpack] Generated ${AnsiColor.MAGENTA}${s.getParent()}/${AnsiColor.BOLD}${s
-                  .getName()}${AnsiColor.RESET} in ${endInstant - startInstant} ms"
+                s"[sbt-webpack] Generated ${AnsiColor.MAGENTA}$s${AnsiColor.RESET} in ${endInstant - startInstant} ms"
               )
             }
 
           (opResults ++ unrelatedOpResults, createdFiles)
         } else {
-          logger.info(s"[sbt-webpack] No changes to compile")
+          if (skip)
+            logger.info(s"[sbt-webpack] Skiping webpack")
+          else
+            logger.info(s"[sbt-webpack] No changes to re-compile")
           (Map.empty, Seq.empty)
         }
 
@@ -255,9 +274,10 @@ object SbtWebpack extends AutoPlugin {
     }
 
     class Compiler(
+      projectRoot: File,
       binary: File,
       configFile: File,
-      entries: Seq[String],
+      entries: Set[File],
       outputFileName: String,
       outputDirectory: File,
       webjarsDirectory: File,
@@ -278,14 +298,8 @@ object SbtWebpack extends AutoPlugin {
         import sbt._
 
         val entriesEnvs = entries.zipWithIndex.map {
-          case (path, index) =>
-            val absolutePath =
-              if (path.startsWith("assets:"))
-                baseDir.toPath.resolve(path.drop(7)).toAbsolutePath
-              else if (path.startsWith("webjar:"))
-                webjarsDirectory.toPath.resolve(path.drop(7)).toAbsolutePath
-              else path
-            s"""--env entry.$index=$absolutePath"""
+          case (file, index) =>
+            s"""--env entry.$index=${file.getAbsolutePath()}"""
         }
 
         val cmd = (Seq(
@@ -313,30 +327,35 @@ object SbtWebpack extends AutoPlugin {
           }
 
         if (success) {
-          val processedFiles: Set[String] =
+          val processedFiles: Seq[File] =
             output
               .filter(s => s.contains("[built]") && !s.contains("multi") && !s.contains("(webpack)"))
               .map(parseOutputLine)
-              .toSet
+              .sorted
+              .map(path => baseDir.toPath().resolve(path).toFile)
 
           logger.info(
-            processedFiles.mkString("[sbt-webpack] Processed files:\n[sbt-webpack]\t", "\n[sbt-webpack]\t", "\n")
+            processedFiles
+              .map(file => file.relativeTo(projectRoot).getOrElse(file))
+              .mkString("[sbt-webpack] Processed files:\n[sbt-webpack]\t", "\n[sbt-webpack]\t", "\n")
           )
 
           CompilationResult(
-            success = exitCode == 0,
-            entries =
-              if (exitCode == 0)
-                Seq(
-                  CompilationEntry(
-                    inputFile = configFile,
-                    filesRead = processedFiles.map(path => baseDir.toPath().resolve(path).toFile()),
-                    filesWritten = Set(outputDirectory.toPath().resolve(outputFileName).toFile())
-                  )
-                )
-              else Seq.empty
+            success = true,
+            entries = Seq(
+              CompilationEntry(
+                inputFile = configFile,
+                filesRead = processedFiles.toSet,
+                filesWritten = Set(outputDirectory.toPath().resolve(outputFileName).toFile())
+              )
+            )
           )
-        } else CompilationResult(success = true, entries = Seq.empty)
+        } else {
+          logger.error(
+            output.map(s => s"[sbt-webpack] $s").mkString("\n")
+          )
+          CompilationResult(success = false, entries = Seq.empty)
+        }
       }
     }
   }

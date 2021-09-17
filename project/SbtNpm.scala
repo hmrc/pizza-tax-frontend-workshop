@@ -34,7 +34,6 @@ object SbtNpm extends AutoPlugin {
       val packageJsonDirectory = SettingKey[File]("packageJsonDirectory", "Root directory of package.json")
       val npmInstall = TaskKey[Int]("npm-install", "Run npm install")
       val npmTest = TaskKey[Int]("npm-test", "Run npm test")
-      val npmBuild = TaskKey[Int]("npm-build", "Run npm build")
     }
   }
 
@@ -49,12 +48,10 @@ object SbtNpm extends AutoPlugin {
         // this enables 'sbt "npm <args>"' commands
         commands ++= packageJsonDirectory(base => Seq(npmCommand(base))).value,
         npmInstall := npmProcess("npm install failed")(packageJsonDirectory.value, "install"),
-        npmBuild := npmProcess("npm build failed")(packageJsonDirectory.value, "run", "build"),
-        npmBuild := (npmBuild dependsOn npmInstall).value,
         npmTest := npmProcess("npm test failed")(packageJsonDirectory.value, "test"),
-        npmTest := (npmTest dependsOn npmBuild).value,
+        npmTest := (npmTest dependsOn npmInstall).value,
         //    (test in Test) := (test in Test).dependsOn(npmTest).value,
-        packager.Keys.dist := (packager.Keys.dist dependsOn npmBuild).value
+        packager.Keys.dist := (packager.Keys.dist dependsOn npmInstall).value
       )
     )
 
