@@ -20,7 +20,7 @@ import org.scalatest.Assertion
 import play.api.libs.json.{Format, Json}
 import org.scalatest.Informer
 import org.scalatest.matchers.should.Matchers
-import uk.gov.hmrc.pizzatax.utils.EnumerationFormats
+import uk.gov.hmrc.play.fsm.PlayFsmUtils
 
 abstract class JsonFormatTest[A: Format](info: Informer) extends Matchers {
 
@@ -28,20 +28,20 @@ abstract class JsonFormatTest[A: Format](info: Informer) extends Matchers {
   implicit val testFormat: Format[TestEntity] = Json.format[TestEntity]
 
   def validateJsonFormat(value: String, entity: A): Assertion = {
-    info(EnumerationFormats.identityOf(entity))
+    info(PlayFsmUtils.identityOf(entity))
     val json = s"""{"entity":${if (value.startsWith("{")) value else s""""$value""""}}"""
     Json.parse(json).as[TestEntity].entity shouldBe entity
     Json.stringify(Json.toJson(TestEntity(entity))) shouldBe json.filter(_ >= ' ')
   }
 
   def validateJsonReads(value: String, entity: A): Assertion = {
-    info(EnumerationFormats.identityOf(entity))
+    info(PlayFsmUtils.identityOf(entity))
     val json = s"""{"entity":${if (value.startsWith("{")) value else s""""$value""""}}"""
     Json.parse(json).as[TestEntity].entity shouldBe entity
   }
 
   def validateJsonWrites(value: String, entity: A): Assertion = {
-    info(EnumerationFormats.identityOf(entity))
+    info(PlayFsmUtils.identityOf(entity))
     val json = s"""{"entity":${if (value.startsWith("{")) value else s""""$value""""}}"""
     Json.stringify(Json.toJson(TestEntity(entity))) shouldBe json.filter(_ >= ' ')
   }

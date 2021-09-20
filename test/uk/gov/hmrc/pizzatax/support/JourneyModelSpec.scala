@@ -16,19 +16,20 @@
 
 package uk.gov.hmrc.pizzatax.support
 
+import org.scalactic.source
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.Informing
 import org.scalatest.matchers.MatchResult
 import org.scalatest.matchers.Matcher
 import org.scalatest.matchers.should.Matchers
-import uk.gov.hmrc.play.fsm.JourneyModel
+import uk.gov.hmrc.play.fsm._
 
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
+import scala.io.AnsiColor
 import scala.reflect.ClassTag
-import org.scalactic.source
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.Informing
 
 /**
   * Abstract base of FSM journey specifications.
@@ -58,15 +59,16 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
 
   val model: JourneyModel
 
+  implicit val defaultTimeout: FiniteDuration = 5 seconds
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import PlayFsmUtils.identityOf
+
+  def await[A](future: Future[A])(implicit timeout: Duration): A =
+    Await.result(future, timeout)
+
   /** Assumption about the initial state of journey. */
   case class given[S <: model.State: ClassTag](initialState: S, breadcrumbs: List[model.State] = Nil) {
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-    private def await[A](future: Future[A])(implicit timeout: Duration): A =
-      Await.result(future, timeout)
-
-    implicit val defaultTimeout: FiniteDuration = 5 seconds
 
     final def withBreadcrumbs(breadcrumbs: model.State*): given[S] =
       given(initialState, breadcrumbs.toList)
@@ -141,9 +143,24 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
 
           case When(_, Right((thisState, _))) if state != thisState =>
             if (state != result.initialState && thisState == result.initialState)
-              MatchResult(false, s"New state $state has been expected but the transition didn't happen.", s"")
-            else
-              MatchResult(false, s"State $state has been expected but got state $thisState", s"")
+              MatchResult(
+                false,
+                s"New state ${AnsiColor.CYAN}${identityOf(state)}${AnsiColor.RESET} has been expected but the transition didn't happen.",
+                s""
+              )
+            else if (state.getClass() == thisState.getClass()) {
+              val diff = Diff(thisState, state)
+              MatchResult(
+                false,
+                s"Obtained state ${AnsiColor.CYAN}${identityOf(state)}${AnsiColor.RESET} content differs from the expected:\n$diff}",
+                s""
+              )
+            } else
+              MatchResult(
+                false,
+                s"State ${AnsiColor.CYAN}${identityOf(state)}${AnsiColor.RESET} has been expected but got state ${AnsiColor.CYAN}${identityOf(thisState)}${AnsiColor.RESET}",
+                s""
+              )
 
           case _ =>
             MatchResult(true, "", s"")
@@ -158,7 +175,11 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
       override def apply(result: When): MatchResult =
         result match {
           case When(_, Left(exception)) =>
-            MatchResult(false, s"Transition has been expected but got an exception $exception", s"")
+            MatchResult(
+              false,
+              s"Transition has been expected but got an exception: ${AnsiColor.RED}$exception${AnsiColor.RESET}",
+              s""
+            )
 
           case When(_, Right((thisState, _))) if !statePF.isDefinedAt(thisState) =>
             MatchResult(false, s"Matching state has been expected but got state $thisState", s"")
@@ -173,7 +194,11 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
       override def apply(result: When): MatchResult =
         result match {
           case When(_, Left(exception)) =>
-            MatchResult(false, s"Transition has been expected but got an exception $exception", s"")
+            MatchResult(
+              false,
+              s"Transition has been expected but got an exception: ${AnsiColor.RED}$exception${AnsiColor.RESET}",
+              s""
+            )
 
           case When(initialState, Right((thisState, _))) if thisState != initialState =>
             MatchResult(false, s"No state change has been expected but got state $thisState", s"")
@@ -192,15 +217,17 @@ trait JourneyModelSpec extends TestJourneyService[DummyContext] {
           case When(_, Left(exception)) if !expectedClass.isAssignableFrom(exception.getClass) =>
             MatchResult(
               false,
-              s"Exception of type ${expectedClass
-                .getName()} has been expected but got exception of type ${exception.getClass().getName()}",
+              s"Exception of type ${AnsiColor.RED}${expectedClass
+                .getName()}${AnsiColor.RESET} has been expected but got exception of type ${AnsiColor.RED}${exception
+                .getClass()
+                .getName()}${AnsiColor.RESET}",
               s""
             )
 
           case When(initialState, Right((thisState, _))) =>
             MatchResult(
               false,
-              s"Exception of type ${expectedClass.getName()} has been expected but got state $thisState",
+              s"Exception of type ${AnsiColor.RED}${expectedClass.getName()}${AnsiColor.RESET} has been expected but got state $thisState",
               s""
             )
 
