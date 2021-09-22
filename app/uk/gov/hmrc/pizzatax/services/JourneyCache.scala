@@ -76,10 +76,15 @@ trait JourneyCache[T, C] extends ExplicitAskSupport {
             case Right(entity: Any) =>
               Future.successful(entity.asInstanceOf[T])
 
-            case Left(JsResultException(_)) =>
+            case Left(JsResultException(jsonErrors)) =>
               val error =
-                "Encountered an issue with de-serialising JSON state from cache. \nCheck if all your states have relevant entries declared in the *JourneyStateFormats.serializeStateProperties and *JourneyStateFormats.deserializeState functions."
-              Logger(getClass).warn(error)
+                s"Encountered an issue with de-serialising JSON state from cache: ${jsonErrors
+                  .map {
+                    case (p, s) =>
+                      s"${if (p.toString().isEmpty()) "" else s"$p -> "}${s.map(_.message).mkString(", ")}"
+                  }
+                  .mkString(", ")}. \nCheck if all your states have relevant entries declared in the *JourneyStateFormats.serializeStateProperties and *JourneyStateFormats.deserializeState functions."
+              Logger(getClass).error(error)
               Future.failed(new Exception(error))
 
             case Left(error: Throwable) =>
