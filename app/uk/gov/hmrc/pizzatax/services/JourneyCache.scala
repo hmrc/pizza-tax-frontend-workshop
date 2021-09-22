@@ -172,7 +172,7 @@ trait JourneyCache[T, C] extends ExplicitAskSupport {
     private def createWorker(journeyId: String): ActorRef = {
       val workerUuid = UUID.randomUUID().toString().takeRight(8)
       Logger(s"uk.gov.hmrc.pizzatax.cache.$journeyKey.$managerUuid")
-        .info(s"Creating new cache worker $workerUuid for the journey $journeyId")
+        .debug(s"Creating new cache worker $workerUuid for the journey $journeyId")
       context.system.scheduler
         .scheduleOnce(Duration(maxWorkerLifespanMinutes, TimeUnit.MINUTES), context.self, (journeyId, LifeEnd))(
           context.system.dispatcher
@@ -186,7 +186,7 @@ trait JourneyCache[T, C] extends ExplicitAskSupport {
     private def removeWorker(journeyId: String): Option[ActorRef] =
       workers.remove(journeyId).map { worker =>
         Logger(s"uk.gov.hmrc.pizzatax.cache.$journeyKey.$managerUuid")
-          .info(s"Removing existing cache worker of the journey $journeyId")
+          .debug(s"Removing existing cache worker of the journey $journeyId")
         worker
       }
 
