@@ -3,7 +3,13 @@ package uk.gov.hmrc.pizzatax.controllers
 import akka.actor.ActorSystem
 import play.api.libs.json.Format
 import play.api.libs.ws.DefaultWSCookie
+import play.api.libs.ws.StandaloneWSRequest
+import play.api.mvc.AnyContent
+import play.api.mvc.Call
+import play.api.mvc.Cookie
+import play.api.mvc.Request
 import play.api.mvc.Session
+import play.api.test.FakeRequest
 import uk.gov.hmrc.crypto.ApplicationCrypto
 import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.pizzatax.journeys.PizzaTaxJourneyModelFormats
@@ -96,13 +102,46 @@ trait PizzaTaxJourneyISpecSetup extends ServerISpec {
     override def getJourneyId(journeyId: JourneyId): Option[String] = Some(journeyId.value)
   }
 
-  final def request(path: String)(implicit journeyId: JourneyId) = {
-    val sessionCookie = sessionCookieBaker.encodeAsCookie(Session(Map(journey.journeyKey -> journeyId.value)))
+  final def fakeRequest(cookies: Cookie*)(implicit
+    journeyId: JourneyId
+  ): Request[AnyContent] =
+    fakeRequest("GET", "/", cookies: _*)
+
+  final def fakeRequest(method: String, path: String, cookies: Cookie*)(implicit
+    journeyId: JourneyId
+  ): Request[AnyContent] =
+    FakeRequest(Call(method, path))
+      .withCookies(cookies: _*)
+      .withSession(journey.journeyKey -> journeyId.value)
+
+  final def request(path: String)(implicit journeyId: JourneyId): StandaloneWSRequest = {
+    val sessionCookie =
+      sessionCookieBaker
+        .encodeAsCookie(Session(Map(journey.journeyKey -> journeyId.value)))
+    wsClient
+      .url(s"$baseUrl$path")
+      .withCookies(
+        DefaultWSCookie(
+          sessionCookie.name,
+          sessionCookieCrypto.crypto.encrypt(PlainText(sessionCookie.value)).value
+        )
+      )
+  }
+
+  final def requestWithCookies(path: String, cookies: (String, String)*)(implicit
+    journeyId: JourneyId
+  ): StandaloneWSRequest = {
+    val sessionCookie =
+      sessionCookieBaker
+        .encodeAsCookie(Session(Map(journey.journeyKey -> journeyId.value)))
 
     wsClient
       .url(s"$baseUrl$path")
       .withCookies(
-        DefaultWSCookie(sessionCookie.name, sessionCookieCrypto.crypto.encrypt(PlainText(sessionCookie.value)).value)
+        (cookies.map(c => DefaultWSCookie(c._1, c._2)) :+ DefaultWSCookie(
+          sessionCookie.name,
+          sessionCookieCrypto.crypto.encrypt(PlainText(sessionCookie.value)).value
+        )): _*
       )
   }
 }
