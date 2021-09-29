@@ -1,6 +1,6 @@
 const path = require('path');
 
-module.exports = function (env, argv) {
+module.exports = function (env) {
   return {
     mode: 'production',
     optimization: {
@@ -11,7 +11,11 @@ module.exports = function (env, argv) {
     devtool: 'source-map',
     entry: Object.values(env.entry),
     resolve: {
-      extensions: ['.js', '.ts']
+      extensions: ['.js', '.ts'],
+      alias: {
+        'node_modules': path.join(__dirname, 'node_modules'),
+        'webjars': env.webjars.path
+      }
     },
     module: {
       rules: [

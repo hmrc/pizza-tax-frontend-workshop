@@ -7,7 +7,7 @@ lazy val scoverageSettings = {
   Seq(
     // Semicolon-separated list of regexes matching classes to exclude
     ScoverageKeys.coverageExcludedPackages := """uk\.gov\.hmrc\.BuildInfo;.*\.Routes;.*\.RoutesPrefix;.*Filters?;MicroserviceAuditConnector;Module;GraphiteStartUp;.*\.Reverse[^.]*""",
-    ScoverageKeys.coverageMinimum := 80.00,
+    ScoverageKeys.coverageMinimumStmtTotal := 80.00,
     ScoverageKeys.coverageFailOnMinimum := false,
     ScoverageKeys.coverageHighlighting := true,
     parallelExecution in Test := false
@@ -28,9 +28,11 @@ lazy val compileDeps = Seq(
 
 def testDeps(scope: String) =
   Seq(
-    "org.scalatest"       %% "scalatest"    % "3.2.8"  % scope,
-    "com.vladsch.flexmark" % "flexmark-all" % "0.36.8" % scope,
-    "org.scalameta"       %% "munit"        % "0.7.29" % scope
+    "org.scalatest"       %% "scalatest"       % "3.2.8"   % scope,
+    "com.vladsch.flexmark" % "flexmark-all"    % "0.36.8"  % scope,
+    "org.scalameta"       %% "munit"           % "0.7.29"  % scope,
+    "org.scalacheck"      %% "scalacheck"      % "1.15.4"  % scope,
+    "org.scalatestplus"   %% "scalacheck-1-15" % "3.2.8.0" % scope
   )
 
 lazy val itDeps = Seq(
@@ -53,11 +55,7 @@ lazy val root = (project in file("."))
     majorVersion := 0,
     javaOptions in Compile += "-Djava.locale.providers=CLDR,JRE",
     WebpackKeys.outputFileName in WebpackKeys.webpack := "javascripts/application.min.js",
-    WebpackKeys.entries in WebpackKeys.webpack := Seq(
-      "assets:javascripts/index.ts",
-      "webjar:lib/govuk-frontend/govuk/all.js",
-      "webjar:lib/hmrc-frontend/hmrc/all.js"
-    )
+    WebpackKeys.entries in WebpackKeys.webpack := Seq("assets:javascripts/index.ts")
   )
   .configs(IntegrationTest)
   .settings(

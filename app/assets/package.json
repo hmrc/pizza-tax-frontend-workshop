@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "Frontend components",
   "scripts": {
+    "start": "webpack --config webpack.config.js",
+    "build": "npm test && webpack --config webpack.config.js",
     "test": "node_modules/karma/bin/karma start --single-run",
     "test-watch": "node_modules/karma/bin/karma start"
   },

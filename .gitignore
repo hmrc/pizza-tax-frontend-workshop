@@ -3,6 +3,7 @@
 !.eslintrc
 !.gitignore
 !.scalafmt.conf
+!.scalafix.conf
 !.description
 
 .cache
