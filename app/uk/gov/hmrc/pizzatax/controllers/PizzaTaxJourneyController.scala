@@ -53,19 +53,29 @@ class PizzaTaxJourneyController @Inject() (
 
   // YOUR ACTIONS
 
+  // GET /
   final val showStart: Action[AnyContent] =
     actions.apply(Transitions.start)
 
+  // GET /have-you-been-hungry-recently
   final val showHaveYouBeenHungryRecently: Action[AnyContent] =
     actions.show[State.HaveYouBeenHungryRecently.type]
 
+  // POST /have-you-been-hungry-recently
   final val submittedHaveYouBeenHungryRecently: Action[AnyContent] =
     actions
       .bindForm(Forms.haveYouBeenHungryRecentlyForm)
       .apply(Transitions.submittedHaveYouBeenHungryRecently)
 
+  // GET /what-you-did-to-address-hunger
   final val showWhatYouDidToAddressHunger: Action[AnyContent] =
     actions.show[State.WhatYouDidToAddressHunger.type]
+
+  // POST /what-you-did-to-address-hunger
+  final val submittedWhatYouDidToAddressHunger: Action[AnyContent] =
+    actions
+      .bindForm(Forms.whatYouDidToAddressHunger)
+      .apply(Transitions.submittedWhatYouDidToAddressHunger)
 
   /**
     * Function from the `State` to the `Call` (route),
@@ -76,6 +86,8 @@ class PizzaTaxJourneyController @Inject() (
       case State.Start                     => controller.showStart
       case State.HaveYouBeenHungryRecently => controller.showHaveYouBeenHungryRecently
       case State.WhatYouDidToAddressHunger => controller.showWhatYouDidToAddressHunger
+      case State.HowManyPizzasDidYouOrder  => Call("GET", "/HowManyPizzasDidYouOrder")
+      case State.DidYouOrderPizzaAnyway    => controller.showWorkInProgress
       case _                               => controller.showWorkInProgress
     }
 
@@ -102,7 +114,7 @@ class PizzaTaxJourneyController @Inject() (
         Ok(
           views.whatYouDidToAddressHungerView(
             formWithErrors.or(Forms.whatYouDidToAddressHunger),
-            controller.showWorkInProgress,
+            controller.submittedWhatYouDidToAddressHunger,
             Some(backLinkFor(breadcrumbs))
           )
         )
