@@ -23,10 +23,12 @@ import play.api.mvc._
 import uk.gov.hmrc.pizzatax.config.AppConfig
 import uk.gov.hmrc.pizzatax.connectors.FrontendAuthConnector
 import uk.gov.hmrc.pizzatax.services.PizzaTaxJourneyServiceWithHeaderCarrier
+import uk.gov.hmrc.pizzatax.config.PizzaTaxAllowanceLimits
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import uk.gov.hmrc.pizzatax.models.HungerSolution
+import uk.gov.hmrc.pizzatax.models.PizzaOrdersDeclaration
 
 @Singleton
 class PizzaTaxJourneyController @Inject() (
@@ -36,7 +38,8 @@ class PizzaTaxJourneyController @Inject() (
   configuration: Configuration,
   controllerComponents: MessagesControllerComponents,
   views: uk.gov.hmrc.pizzatax.views.Views,
-  pizzaTaxJourneyService: PizzaTaxJourneyServiceWithHeaderCarrier
+  pizzaTaxJourneyService: PizzaTaxJourneyServiceWithHeaderCarrier,
+  taxAllowanceLimits: PizzaTaxAllowanceLimits
 ) extends BaseJourneyController(
       pizzaTaxJourneyService,
       controllerComponents,
@@ -77,6 +80,16 @@ class PizzaTaxJourneyController @Inject() (
       .bindForm(Forms.whatYouDidToAddressHunger)
       .apply(Transitions.submittedWhatYouDidToAddressHunger)
 
+  // GET /how-many-pizzas-did-you-order
+  final val showHowManyPizzasDidYouOrder: Action[AnyContent] =
+    actions.show[State.HowManyPizzasDidYouOrder.type]
+
+  // POST /how-many-pizzas-did-you-order
+  final val submittedHowManyPizzasDidYouOrder: Action[AnyContent] =
+    actions
+      .bindForm(Forms.howManyPizzasDidYouOrder)
+      .apply(Transitions.submittedHowManyPizzasDidYouOrder(taxAllowanceLimits))
+
   /**
     * Function from the `State` to the `Call` (route),
     * used by play-fsm internally to create redirects.
@@ -86,8 +99,9 @@ class PizzaTaxJourneyController @Inject() (
       case State.Start                     => controller.showStart
       case State.HaveYouBeenHungryRecently => controller.showHaveYouBeenHungryRecently
       case State.WhatYouDidToAddressHunger => controller.showWhatYouDidToAddressHunger
-      case State.HowManyPizzasDidYouOrder  => Call("GET", "/HowManyPizzasDidYouOrder")
+      case State.HowManyPizzasDidYouOrder  => controller.showHowManyPizzasDidYouOrder
       case State.DidYouOrderPizzaAnyway    => controller.showWorkInProgress
+      case _: State.QuestionnaireSummary   => Call("GET", "/summary")
       case _                               => controller.showWorkInProgress
     }
 
@@ -118,6 +132,14 @@ class PizzaTaxJourneyController @Inject() (
             Some(backLinkFor(breadcrumbs))
           )
         )
+      case State.HowManyPizzasDidYouOrder =>
+        Ok(
+          views.howManyPizzasDidYouOrderView(
+            formWithErrors.or(Forms.howManyPizzasDidYouOrder),
+            controller.submittedHowManyPizzasDidYouOrder,
+            Some(backLinkFor(breadcrumbs))
+          )
+        )
       case _ => NotImplemented
     }
 }
@@ -140,6 +162,10 @@ object PizzaTaxJourneyController {
       mapping("whatYouDidToAddressHunger" -> enumMapping[HungerSolution]("whatYouDidToAddressHunger"))(identity)(
         Option.apply
       )
+    )
+
+    val howManyPizzasDidYouOrder = Form[PizzaOrdersDeclaration](
+      mapping("totalNumberOfPizzas" -> number)(PizzaOrdersDeclaration.apply(_))(e => Some(e.totalNumberOfPizzas))
     )
   }
 

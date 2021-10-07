@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pizzatax.views
+package uk.gov.hmrc.pizzatax.config
 
-import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.pizzatax.views.html._
+import uk.gov.hmrc.pizzatax.models.BasicPizzaAllowanceLimits
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import uk.gov.hmrc.pizzatax.models.PizzaOrdersDeclaration
 
 @Singleton
-class Views @Inject() (
-  val haveYouBeenHungryRecentlyView: HaveYouBeenHungryRecentlyView,
-  val whatYouDidToAddressHungerView: WhatYouDidToAddressHungerView,
-  val howManyPizzasDidYouOrderView: HowManyPizzasDidYouOrderView
-)
+class PizzaTaxAllowanceLimits @Inject() (appConfig: AppConfig) extends BasicPizzaAllowanceLimits {
+
+  def areNotExceededBy(pizzaOrders: PizzaOrdersDeclaration): Boolean =
+    pizzaOrders.totalNumberOfPizzas <= 3
+
+}
