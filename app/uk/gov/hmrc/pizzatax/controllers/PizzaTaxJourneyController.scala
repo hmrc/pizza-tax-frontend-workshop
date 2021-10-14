@@ -62,7 +62,9 @@ class PizzaTaxJourneyController @Inject() (
 
   // GET /have-you-been-hungry-recently
   final val showHaveYouBeenHungryRecently: Action[AnyContent] =
-    actions.show[State.HaveYouBeenHungryRecently.type]
+    actions
+      .show[State.HaveYouBeenHungryRecently.type]
+      .orApply(Transitions.backToHaveYouBeenHungryRecently)
 
   // POST /have-you-been-hungry-recently
   final val submittedHaveYouBeenHungryRecently: Action[AnyContent] =
@@ -72,7 +74,9 @@ class PizzaTaxJourneyController @Inject() (
 
   // GET /what-you-did-to-address-hunger
   final val showWhatYouDidToAddressHunger: Action[AnyContent] =
-    actions.show[State.WhatYouDidToAddressHunger.type]
+    actions
+      .show[State.WhatYouDidToAddressHunger.type]
+      .orApply(Transitions.backToWhatYouDidToAddressHunger)
 
   // POST /what-you-did-to-address-hunger
   final val submittedWhatYouDidToAddressHunger: Action[AnyContent] =
@@ -82,7 +86,9 @@ class PizzaTaxJourneyController @Inject() (
 
   // GET /how-many-pizzas-did-you-order
   final val showHowManyPizzasDidYouOrder: Action[AnyContent] =
-    actions.show[State.HowManyPizzasDidYouOrder.type]
+    actions
+      .show[State.HowManyPizzasDidYouOrder.type]
+      .orApply(Transitions.backToHowManyPizzasDidYouOrder)
 
   // POST /how-many-pizzas-did-you-order
   final val submittedHowManyPizzasDidYouOrder: Action[AnyContent] =

@@ -85,6 +85,11 @@ object PizzaTaxJourneyModel extends JourneyModel {
             goto(DidYouOrderPizzaAnyway)
       }
 
+    final def backToHaveYouBeenHungryRecently =
+      Transition {
+        case _ => goto(HaveYouBeenHungryRecently)
+      }
+
     final def submittedWhatYouDidToAddressHunger(solution: HungerSolution) =
       Transition {
         case WhatYouDidToAddressHunger =>
@@ -96,6 +101,11 @@ object PizzaTaxJourneyModel extends JourneyModel {
           }
       }
 
+    final def backToWhatYouDidToAddressHunger =
+      Transition {
+        case _ => goto(WhatYouDidToAddressHunger)
+      }
+
     final def submittedDidYouOrderPizzaAnyway(confirmed: Boolean) =
       Transition {
         case DidYouOrderPizzaAnyway =>
@@ -103,6 +113,11 @@ object PizzaTaxJourneyModel extends JourneyModel {
             goto(HowManyPizzasDidYouOrder)
           else
             goto(NotEligibleForPizzaTax)
+      }
+
+    final def backToHowManyPizzasDidYouOrder =
+      Transition {
+        case _ => goto(HowManyPizzasDidYouOrder)
       }
 
     final def submittedHowManyPizzasDidYouOrder(
