@@ -79,6 +79,8 @@ The aim of the workshop is to build step-by-step a frontend microservice impleme
 
 ## Running the app locally
 
+
+    sm --start AWESOME_STUBS AWESOME_STUBS_FRONTEND ASSETS_FRONTEND
     sbt run
 
 It should then be listening on port 12345
