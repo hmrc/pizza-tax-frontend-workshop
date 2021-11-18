@@ -9,7 +9,9 @@ POST       /have-you-been-hungry-recently                           @uk.gov.hmrc
 GET        /what-you-did-to-address-hunger                          @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.showWhatYouDidToAddressHunger
 POST       /what-you-did-to-address-hunger                          @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.submittedWhatYouDidToAddressHunger
 GET        /how-many-pizzas-did-you-order                           @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.showHowManyPizzasDidYouOrder
-POST       /submit-how-many-pizzas-did-you-order                           @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.submittedHowManyPizzasDidYouOrder
+POST       /how-many-pizzas-did-you-order                           @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.submittedHowManyPizzasDidYouOrder
+GET        /did-you-order-pizza-anyway                              @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.showDidYouOrderPizzaAnyway
+POST       /did-you-order-pizza-anyway                              @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.submittedDidYouOrderPizzaAnyway
 
 GET        /work-in-progress                                        @uk.gov.hmrc.pizzatax.controllers.PizzaTaxJourneyController.showWorkInProgress
 

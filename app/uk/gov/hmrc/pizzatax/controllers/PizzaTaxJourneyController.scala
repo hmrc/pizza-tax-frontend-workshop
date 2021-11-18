@@ -84,6 +84,18 @@ class PizzaTaxJourneyController @Inject() (
       .bindForm(Forms.whatYouDidToAddressHunger)
       .apply(Transitions.submittedWhatYouDidToAddressHunger)
 
+  // GET /did-you-order-pizza-anyway
+  final val showDidYouOrderPizzaAnyway: Action[AnyContent] =
+    actions
+      .show[State.DidYouOrderPizzaAnyway.type]
+      .orApply(Transitions.backToDidYouOrderPizzaAnyway)
+
+  // POST /did-you-order-pizza-anyway
+  final val submittedDidYouOrderPizzaAnyway: Action[AnyContent] =
+    actions
+      .bindForm(Forms.didYouOrderPizzaAnywayForm)
+      .apply(Transitions.submittedDidYouOrderPizzaAnyway)
+
   // GET /how-many-pizzas-did-you-order
   final val showHowManyPizzasDidYouOrder: Action[AnyContent] =
     actions
@@ -106,7 +118,7 @@ class PizzaTaxJourneyController @Inject() (
       case State.HaveYouBeenHungryRecently => controller.showHaveYouBeenHungryRecently
       case State.WhatYouDidToAddressHunger => controller.showWhatYouDidToAddressHunger
       case State.HowManyPizzasDidYouOrder  => controller.showHowManyPizzasDidYouOrder
-      case State.DidYouOrderPizzaAnyway    => controller.showWorkInProgress
+      case State.DidYouOrderPizzaAnyway    => controller.showDidYouOrderPizzaAnyway
       case _: State.QuestionnaireSummary   => Call("GET", "/summary")
       case _                               => controller.showWorkInProgress
     }
@@ -138,6 +150,15 @@ class PizzaTaxJourneyController @Inject() (
             Some(backLinkFor(breadcrumbs))
           )
         )
+      case State.DidYouOrderPizzaAnyway =>
+        Ok(
+          views.didYouOrderPizzaAnywayView(
+            formWithErrors.or(Forms.didYouOrderPizzaAnywayForm),
+            controller.submittedDidYouOrderPizzaAnyway,
+            Some(backLinkFor(breadcrumbs))
+          )
+        )
+
       case State.HowManyPizzasDidYouOrder =>
         Ok(
           views.howManyPizzasDidYouOrderView(
@@ -172,6 +193,12 @@ object PizzaTaxJourneyController {
 
     val howManyPizzasDidYouOrder = Form[PizzaOrdersDeclaration](
       mapping("totalNumberOfPizzas" -> number)(PizzaOrdersDeclaration.apply(_))(e => Some(e.totalNumberOfPizzas))
+    )
+
+    val didYouOrderPizzaAnywayForm = Form[Boolean](
+      mapping("didYouOrderPizzaAnyway" -> booleanMapping("didYouOrderPizzaAnyway", "yes", "no"))(identity)(
+        Option.apply
+      )
     )
   }
 

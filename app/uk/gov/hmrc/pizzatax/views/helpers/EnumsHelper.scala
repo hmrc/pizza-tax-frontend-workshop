@@ -55,4 +55,18 @@ class EnumsHelper extends RadioItemsHelper with CheckboxItemsHelper {
       form
     )
 
+  def didYouOrderPizzaAnyway(form: Form[_])(implicit messages: Messages): Seq[RadioItem] =
+    Seq(
+      RadioItem(
+        value = Some("yes"),
+        content = Text(messages(s"form.didYouOrderPizzaAnyway.yes")),
+        checked = form("didYouOrderPizzaAnyway").value.contains("yes")
+      ),
+      RadioItem(
+        value = Some("no"),
+        content = Text(messages(s"form.didYouOrderPizzaAnyway.no")),
+        checked = form("didYouOrderPizzaAnyway").value.contains("no")
+      )
+    )
+
 }

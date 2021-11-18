@@ -23,5 +23,6 @@ import uk.gov.hmrc.pizzatax.views.html._
 class Views @Inject() (
   val haveYouBeenHungryRecentlyView: HaveYouBeenHungryRecentlyView,
   val whatYouDidToAddressHungerView: WhatYouDidToAddressHungerView,
-  val howManyPizzasDidYouOrderView: HowManyPizzasDidYouOrderView
+  val howManyPizzasDidYouOrderView: HowManyPizzasDidYouOrderView,
+  val didYouOrderPizzaAnywayView: DidYouOrderPizzaAnywayView
 )

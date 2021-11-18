@@ -63,7 +63,7 @@ class PizzaTaxJourneyISpec extends PizzaTaxJourneyISpecSetup {
         result.body should include(htmlEscapedPageTitle("view.whatYouDidToAddressHunger.title"))
       }
 
-      "if selected NO then show [???]" in {
+      "if selected NO then show [Did you order pizza anyway?]" in {
         journey.setState(State.HaveYouBeenHungryRecently)
         givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
         val result = await(
@@ -71,7 +71,45 @@ class PizzaTaxJourneyISpec extends PizzaTaxJourneyISpecSetup {
             .post(Map("haveYouBeenHungryRecently" -> "no"))
         )
         journey.getState shouldBe State.DidYouOrderPizzaAnyway
-        result.status shouldBe 501
+        result.status shouldBe 200
+        result.body should include(htmlEscapedPageTitle("view.didYouOrderPizzaAnyway.title"))
+      }
+    }
+
+    "GET /did-you-order-pizza-anyway" should {
+      "show [Did you order pizza anyway?] page" in {
+        journey.setState(State.DidYouOrderPizzaAnyway)
+        givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
+        val result = await(request("/did-you-order-pizza-anyway").get())
+        journey.getState shouldBe State.DidYouOrderPizzaAnyway
+        result.status shouldBe 200
+        result.body should include(htmlEscapedPageTitle("view.didYouOrderPizzaAnyway.title"))
+      }
+    }
+
+    "POST /did-you-order-pizza-anyway" should {
+      "if selected YES then show [HowManyPizzasDidYouOrder]" in {
+        journey.setState(State.DidYouOrderPizzaAnyway)
+        givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
+        val result = await(
+          request("/did-you-order-pizza-anyway")
+            .post(Map("didYouOrderPizzaAnyway" -> "yes"))
+        )
+        journey.getState shouldBe State.HowManyPizzasDidYouOrder
+        //result.status shouldBe 200
+        //result.body should include(htmlEscapedPageTitle("view.whatYouDidToAddressHunger.title"))
+      }
+
+      "if selected NO then show [NotEligibleForPizzaTax]" in {
+        journey.setState(State.DidYouOrderPizzaAnyway)
+        givenAuthorisedForEnrolment(Enrolment("HMRC-XYZ", "Foo", "foo"))
+        val result = await(
+          request("/did-you-order-pizza-anyway")
+            .post(Map("didYouOrderPizzaAnyway" -> "no"))
+        )
+        journey.getState shouldBe State.NotEligibleForPizzaTax
+        //result.status shouldBe 200
+        //result.body should include(htmlEscapedPageTitle("view.didYouOrderPizzaAnyway.title"))
       }
     }
 
